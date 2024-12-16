@@ -1,5 +1,4 @@
 package io.github.xinfra.lab.raft;
 
-public class RaftNode {
-
+public class RequestVoteResponse {
 }
