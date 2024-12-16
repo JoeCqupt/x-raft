@@ -3,6 +3,8 @@ package io.github.xinfra.lab.raft;
 
 import lombok.Getter;
 
+import java.util.List;
+
 public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServerProtocol {
     @Getter
     private RaftPeer raftPeer;
@@ -12,6 +14,11 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
     private RaftServerConfig config;
     @Getter
     private RaftNodeState state;
+    @Getter
+    private RaftLog raftLog;
+
+    @Getter
+    private RaftServerRpc raftServerRpc;
 
     public RaftServer(RaftPeer raftPeer, RaftGroup raftGroup, RaftServerConfig config) {
         this.raftPeer = raftPeer;
@@ -31,12 +38,10 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
     }
 
     @Override
-    public synchronized void startup() {
+    public void startup() {
         super.startup();
-        state.startFollowerState();
+        changeToFollower();
     }
-
-
 
     @Override
     public void shutdown() {
@@ -54,11 +59,27 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
         return null;
     }
 
+    private synchronized void changeToFollower() {
+        if (state.getRole() == RaftRole.CANDIDATE){
+            state.shutdownCandidateState();
+        }if (state.getRole() == RaftRole.LEADER){
+            state.shutdownLeaderState();
+        }
+        state.startFollowerState();
+    }
+
     public synchronized void changeToCandidate() {
         state.shutdownFollowerState();
         state.startCandidateState();
     }
 
     public synchronized  void changeToLeader() {
+        state.shutdownCandidateState();
+        state.startLeaderState();
+    }
+
+    public List<RaftPeer> otherPeers() {
+        // todo
+        return null;
     }
 }

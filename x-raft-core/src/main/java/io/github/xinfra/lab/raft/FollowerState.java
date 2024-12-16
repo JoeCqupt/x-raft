@@ -26,7 +26,7 @@ public class FollowerState extends Thread {
                 }
                 synchronized (raftServer) {
                     if (shouldRun() && timeout(electionTimeout)) {
-                     raftServer.changeToCandidate();
+                        raftServer.changeToCandidate();
                     }
                 }
             } catch (InterruptedException e) {
@@ -39,11 +39,19 @@ public class FollowerState extends Thread {
         }
     }
 
+    public void updateLastRpcTime(Long lastRpcTime) {
+        this.lastRpcTime = lastRpcTime;
+    }
+
     private boolean timeout(Long electionTimeout) {
         return System.currentTimeMillis() - lastRpcTime > electionTimeout;
     }
 
     public boolean shouldRun() {
         return running && raftServer.getState().getRole() == RaftRole.FOLLOWER;
+    }
+
+    public void shutdown() {
+        running = false;
     }
 }
