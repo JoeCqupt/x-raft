@@ -1,15 +1,20 @@
 package io.github.xinfra.lab.raft;
 
-import java.util.Iterator;
+import lombok.Getter;
+
+import java.util.Set;
+
 
 public class RaftGroup {
 
     private String raftGroupId;
 
-    private Iterator<RaftPeer> raftPeers;
+    @Getter
+    private Set<RaftPeer> raftPeers;
 
-    public RaftGroup(String raftGroupId, Iterator<RaftPeer> raftPeers) {
+    public RaftGroup(String raftGroupId, Set<RaftPeer> raftPeers) {
         this.raftGroupId = raftGroupId;
         this.raftPeers = raftPeers;
     }
+
 }

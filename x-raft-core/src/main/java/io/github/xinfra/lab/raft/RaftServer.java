@@ -6,9 +6,7 @@ import lombok.Getter;
 import java.util.List;
 
 public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServerProtocol {
-    @Getter
     private RaftPeer raftPeer;
-    @Getter
     private RaftGroup raftGroup;
     @Getter
     private RaftServerConfig config;
@@ -76,10 +74,5 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
     public synchronized  void changeToLeader() {
         state.shutdownCandidateState();
         state.startLeaderState();
-    }
-
-    public List<RaftPeer> otherPeers() {
-        // todo
-        return null;
     }
 }

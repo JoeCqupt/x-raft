@@ -51,11 +51,16 @@ public class CandidateState extends Thread {
 
     private void sendVoteRequests(boolean preVote) {
 
-        List<RaftPeer> otherPeers = raftServer.otherPeers();
+        List<RaftPeer> otherPeers = raftServer.getState().remoteVotingMembers();
         if (otherPeers.isEmpty()) {
             // todo
             return;
         }
+
+        // vote to self
+        BallotBox ballotBox = new BallotBox(raftServer.getState());
+        ballotBox.grantVote(raftServer.getPeer());
+
         long electionTerm;
         if (preVote) {
             electionTerm = raftServer.getState().getCurrentTerm().get();
@@ -66,7 +71,7 @@ public class CandidateState extends Thread {
 
         TermIndex lastEntry = raftServer.getRaftLog().getLastEntryTermIndex();
         RequestVoteRequest requestVoteRequest = new RequestVoteRequest();
-        requestVoteRequest.setCandidateId(raftServer.getRaftPeer().getRaftPeerId());
+        requestVoteRequest.setCandidateId(raftServer.getPeer().getRaftPeerId());
         requestVoteRequest.setTerm(electionTerm);
         requestVoteRequest.setLastLogIndex(lastEntry.getIndex());
         requestVoteRequest.setLastLogTerm(lastEntry.getTerm());

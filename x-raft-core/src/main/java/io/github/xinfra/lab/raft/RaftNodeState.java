@@ -2,6 +2,7 @@ package io.github.xinfra.lab.raft;
 
 import lombok.Getter;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -10,9 +11,7 @@ public class RaftNodeState {
 
     @Getter
     private final AtomicLong currentTerm = new AtomicLong();
-
     private volatile RaftPeer leaderId;
-
     private volatile RaftPeer votedFor;
 
     @Getter
@@ -56,5 +55,10 @@ public class RaftNodeState {
     }
 
     public void shutdownLeaderState() {
+    }
+
+    public List<RaftPeer> remoteVotingMembers() {
+        // todo
+        return null;
     }
 }
