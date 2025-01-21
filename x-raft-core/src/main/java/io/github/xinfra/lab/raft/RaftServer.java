@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.util.List;
 
 public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServerProtocol {
+
     private RaftPeer raftPeer;
     private RaftGroup raftGroup;
     @Getter

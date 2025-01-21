@@ -33,7 +33,7 @@ public class RaftNodeState {
 
     public void shutdownFollowerState() {
         FollowerState follower = followerState.getAndSet(null);
-        if (follower!=null){
+        if (follower != null) {
             follower.shutdown();
             follower.interrupt();
         }
@@ -46,6 +46,11 @@ public class RaftNodeState {
     }
 
     public void shutdownCandidateState() {
+        CandidateState candidate = candidateState.getAndSet(null);
+        if (candidate != null) {
+            candidate.shutdown();
+            candidate.interrupt();
+        }
     }
 
     public void startLeaderState() {

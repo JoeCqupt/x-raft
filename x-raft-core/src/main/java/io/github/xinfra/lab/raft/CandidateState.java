@@ -91,4 +91,8 @@ public class CandidateState extends Thread {
     private boolean shouldRun() {
         return running && raftServer.getState().getRole() == RaftRole.CANDIDATE;
     }
+
+    public void shutdown() {
+        running = false;
+    }
 }

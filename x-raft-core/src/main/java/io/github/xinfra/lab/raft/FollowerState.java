@@ -21,9 +21,6 @@ public class FollowerState extends Thread {
             try {
                 Long electionTimeout = raftServer.getRandomElectionTimeout();
                 TimeUnit.MILLISECONDS.sleep(electionTimeout);
-                if (!shouldRun()) {
-                    break;
-                }
                 synchronized (raftServer) {
                     if (shouldRun() && timeout(electionTimeout)) {
                         raftServer.changeToCandidate();
