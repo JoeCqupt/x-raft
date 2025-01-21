@@ -3,9 +3,7 @@ package io.github.xinfra.lab.raft;
 
 import lombok.Getter;
 
-import java.util.List;
-
-public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServerProtocol {
+public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
     private RaftPeer raftPeer;
     private RaftGroup raftGroup;
@@ -16,10 +14,8 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
     @Getter
     private RaftLog raftLog;
 
-    @Getter
-    private RaftServerRpc raftServerRpc;
 
-    public RaftServer(RaftPeer raftPeer, RaftGroup raftGroup, RaftServerConfig config) {
+    public XRaftNode(RaftPeer raftPeer, RaftGroup raftGroup, RaftServerConfig config) {
         this.raftPeer = raftPeer;
         this.raftGroup = raftGroup;
         this.config = config;
@@ -34,6 +30,11 @@ public class RaftServer extends AbstractLifeCycle implements RaftNode, RaftServe
     @Override
     public RaftGroup getGroup() {
         return raftGroup;
+    }
+
+    @Override
+    public RaftServerProtocol getRaftServer(RaftPeer raftPeer) {
+        return null;
     }
 
     @Override

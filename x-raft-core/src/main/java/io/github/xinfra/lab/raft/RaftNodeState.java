@@ -16,18 +16,18 @@ public class RaftNodeState {
 
     @Getter
     private volatile RaftRole role;
-    private final RaftServer raftServer;
+    private final XRaftNode xRaftNode;
     private final AtomicReference<FollowerState> followerState = new AtomicReference<>();
     private final AtomicReference<CandidateState> candidateState = new AtomicReference<>();
     private final AtomicReference<LeaderState> leaderState = new AtomicReference<>();
 
-    public RaftNodeState(RaftServer raftServer) {
-        this.raftServer = raftServer;
+    public RaftNodeState(XRaftNode xRaftNode) {
+        this.xRaftNode = xRaftNode;
     }
 
     public void startFollowerState() {
         role = RaftRole.FOLLOWER;
-        followerState.updateAndGet(current -> current == null ? new FollowerState(raftServer) : current)
+        followerState.updateAndGet(current -> current == null ? new FollowerState(xRaftNode) : current)
                 .start();
     }
 
@@ -41,7 +41,7 @@ public class RaftNodeState {
 
     public void startCandidateState() {
         role = RaftRole.CANDIDATE;
-        candidateState.updateAndGet(current -> current == null ? new CandidateState(raftServer) : current)
+        candidateState.updateAndGet(current -> current == null ? new CandidateState(xRaftNode) : current)
                 .start();
     }
 
@@ -55,7 +55,7 @@ public class RaftNodeState {
 
     public void startLeaderState() {
         role = RaftRole.LEADER;
-        leaderState.updateAndGet(current -> current == null ? new LeaderState(raftServer) : current)
+        leaderState.updateAndGet(current -> current == null ? new LeaderState(xRaftNode) : current)
                 .start();
     }
 

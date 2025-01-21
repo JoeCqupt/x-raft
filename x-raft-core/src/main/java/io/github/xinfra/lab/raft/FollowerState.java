@@ -7,23 +7,23 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class FollowerState extends Thread {
 
-    private final RaftServer raftServer;
+    private final XRaftNode xRaftNode;
     private Long lastRpcTime = System.currentTimeMillis();
     private volatile boolean running = true;
 
-    public FollowerState(RaftServer raftServer) {
-        this.raftServer = raftServer;
+    public FollowerState(XRaftNode xRaftNode) {
+        this.xRaftNode = xRaftNode;
     }
 
     @Override
     public void run() {
         while (shouldRun()) {
             try {
-                Long electionTimeout = raftServer.getRandomElectionTimeout();
+                Long electionTimeout = xRaftNode.getRandomElectionTimeout();
                 TimeUnit.MILLISECONDS.sleep(electionTimeout);
-                synchronized (raftServer) {
+                synchronized (xRaftNode) {
                     if (shouldRun() && timeout(electionTimeout)) {
-                        raftServer.changeToCandidate();
+                        xRaftNode.changeToCandidate();
                     }
                 }
             } catch (InterruptedException e) {
@@ -45,7 +45,7 @@ public class FollowerState extends Thread {
     }
 
     public boolean shouldRun() {
-        return running && raftServer.getState().getRole() == RaftRole.FOLLOWER;
+        return running && xRaftNode.getState().getRole() == RaftRole.FOLLOWER;
     }
 
     public void shutdown() {

@@ -1,15 +1,15 @@
 package io.github.xinfra.lab.raft;
 
-import lombok.Getter;
+import lombok.Data;
 
 import java.util.Set;
 
 
+@Data
 public class RaftGroup {
 
     private String raftGroupId;
 
-    @Getter
     private Set<RaftPeer> raftPeers;
 
     public RaftGroup(String raftGroupId, Set<RaftPeer> raftPeers) {

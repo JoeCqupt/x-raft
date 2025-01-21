@@ -10,10 +10,10 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class CandidateState extends Thread {
     private volatile boolean running = true;
-    private final RaftServer raftServer;
+    private final XRaftNode xRaftNode;
 
-    public CandidateState(RaftServer raftServer) {
-        this.raftServer = raftServer;
+    public CandidateState(XRaftNode xRaftNode) {
+        this.xRaftNode = xRaftNode;
     }
 
     @Override
@@ -22,7 +22,7 @@ public class CandidateState extends Thread {
             try {
                 if (preVote()) {
                     if (vote()) {
-                        raftServer.changeToLeader();
+                        xRaftNode.changeToLeader();
                     }
                 }
             } catch (Throwable t) {
@@ -37,7 +37,7 @@ public class CandidateState extends Thread {
     }
 
     private boolean preVote() {
-        synchronized (raftServer) {
+        synchronized (xRaftNode) {
             if (!shouldRun()) {
                 return false;
             }
@@ -51,27 +51,27 @@ public class CandidateState extends Thread {
 
     private void sendVoteRequests(boolean preVote) {
 
-        List<RaftPeer> otherPeers = raftServer.getState().remoteVotingMembers();
+        List<RaftPeer> otherPeers = xRaftNode.getState().remoteVotingMembers();
         if (otherPeers.isEmpty()) {
             // todo
             return;
         }
 
         // vote to self
-        BallotBox ballotBox = new BallotBox(raftServer.getState());
-        ballotBox.grantVote(raftServer.getPeer());
+        BallotBox ballotBox = new BallotBox(xRaftNode.getState());
+        ballotBox.grantVote(xRaftNode.getPeer());
 
         long electionTerm;
         if (preVote) {
-            electionTerm = raftServer.getState().getCurrentTerm().get();
+            electionTerm = xRaftNode.getState().getCurrentTerm().get();
         } else {
             // todo
             electionTerm = 0;
         }
 
-        TermIndex lastEntry = raftServer.getRaftLog().getLastEntryTermIndex();
+        TermIndex lastEntry = xRaftNode.getRaftLog().getLastEntryTermIndex();
         RequestVoteRequest requestVoteRequest = new RequestVoteRequest();
-        requestVoteRequest.setCandidateId(raftServer.getPeer().getRaftPeerId());
+        requestVoteRequest.setCandidateId(xRaftNode.getPeer().getRaftPeerId());
         requestVoteRequest.setTerm(electionTerm);
         requestVoteRequest.setLastLogIndex(lastEntry.getIndex());
         requestVoteRequest.setLastLogTerm(lastEntry.getTerm());
@@ -79,7 +79,7 @@ public class CandidateState extends Thread {
         ExecutorCompletionService<RequestVoteResponse> voteExecutor =
                 new ExecutorCompletionService<>(Executors.newFixedThreadPool(otherPeers.size()));
         for (RaftPeer raftPeer : otherPeers) {
-            voteExecutor.submit(() -> raftServer.getRaftServerRpc().requestVote(requestVoteRequest));
+            voteExecutor.submit(() -> xRaftNode.getRaftServer(raftPeer).requestVote(requestVoteRequest));
         }
 
         int waitNum = otherPeers.size();
@@ -89,7 +89,7 @@ public class CandidateState extends Thread {
     }
 
     private boolean shouldRun() {
-        return running && raftServer.getState().getRole() == RaftRole.CANDIDATE;
+        return running && xRaftNode.getState().getRole() == RaftRole.CANDIDATE;
     }
 
     public void shutdown() {
