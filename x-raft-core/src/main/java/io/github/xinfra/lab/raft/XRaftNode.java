@@ -41,7 +41,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	public void startup() {
 		super.startup();
 		raftServerTransport.startup();
-		raftServerTransport.addRaftPeers(raftGroup.getRaftPeers());
+		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getOtherRaftPeers());
 		changeToFollower();
 	}
 

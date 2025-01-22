@@ -1,28 +1,42 @@
 package io.github.xinfra.lab.raft;
 
-import lombok.Getter;
+import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
+@Data
 public class RaftConfiguration {
 
+	private RaftPeer selfRaftPeer;
+
 	/** Non-null only if this configuration is transitional. */
-	@Getter
 	private final PeerConfiguration oldConf;
 
 	/**
 	 * The current peer configuration while this configuration is stable; or the new peer
 	 * configuration while this configuration is transitional.
 	 */
-	@Getter
 	private final PeerConfiguration conf;
 
 	/** The index of the corresponding log entry for this configuration. */
-	@Getter
-	private final long logEntryIndex;
+	private final long logEntryIndex = -1;
 
-	public RaftConfiguration(PeerConfiguration oldConf, PeerConfiguration conf, long logEntryIndex) {
+	public RaftConfiguration(RaftPeer selfRaftPeer, PeerConfiguration oldConf, PeerConfiguration conf) {
+		this.selfRaftPeer = selfRaftPeer;
 		this.oldConf = oldConf;
 		this.conf = conf;
-		this.logEntryIndex = logEntryIndex;
 	}
+
+	public Set<RaftPeer> getOtherRaftPeers() {
+		Set<RaftPeer> set = new HashSet<>();
+		set.addAll(conf.getPeers());
+		if (oldConf!=null){
+			set.addAll(oldConf.getPeers());
+		}
+		set.remove(selfRaftPeer);
+		return set;
+	}
+
 
 }

@@ -1,26 +1,25 @@
 package io.github.xinfra.lab.raft;
 
-import lombok.Getter;
+import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
+@Data
 public class PeerConfiguration {
 
 	/**
 	 * Peers are voting members such as LEADER, CANDIDATE and FOLLOWER
 	 */
-	@Getter
-	private final Map<RaftPeer, RaftPeer> peers;
+	private final List<RaftPeer> peers;
 
 	/**
 	 * Listeners are non-voting members.
 	 */
-	@Getter
-	private final Map<RaftPeer, RaftPeer> listeners;
+	private final List<RaftPeer> learners;
 
-	public PeerConfiguration(Map<RaftPeer, RaftPeer> peers, Map<RaftPeer, RaftPeer> listeners) {
+	public PeerConfiguration(List<RaftPeer> peers, List<RaftPeer> learners) {
 		this.peers = peers;
-		this.listeners = listeners;
+		this.learners = learners;
 	}
-
 }

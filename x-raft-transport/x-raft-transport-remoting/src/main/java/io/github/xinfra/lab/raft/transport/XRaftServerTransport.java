@@ -22,6 +22,7 @@ public class XRaftServerTransport extends AbstractLifeCycle implements RaftServe
 		// todo
 	}
 
+
 	@Override
 	public RequestVoteResponse requestVote(RequestVoteRequest requestVoteRequest) {
 		// todo

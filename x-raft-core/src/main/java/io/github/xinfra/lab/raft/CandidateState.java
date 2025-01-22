@@ -3,6 +3,7 @@ package io.github.xinfra.lab.raft;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 
@@ -39,24 +40,26 @@ public class CandidateState extends Thread {
 	}
 
 	private boolean preVote() {
+		long electionTerm;
+		RaftConfiguration raftConfiguration;
 		synchronized (xRaftNode) {
 			if (!shouldRun()) {
 				return false;
 			}
 
-			long term = xRaftNode.getState().getCurrentTerm().get();
-
+			electionTerm = xRaftNode.getState().getCurrentTerm().get();
+			 raftConfiguration = xRaftNode.getState().getRaftConfiguration();
 		}
 
-		sendVoteRequests(true);
-
+		sendVoteRequests(true, electionTerm, raftConfiguration);
 		return false;
 	}
 
-	private void sendVoteRequests(boolean preVote) {
+	private void sendVoteRequests(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration) {
 
-		List<RaftPeer> otherPeers = xRaftNode.getState().remoteVotingMembers();
-		if (otherPeers.isEmpty()) {
+		Set<RaftPeer> otherRaftPeers = raftConfiguration.getOtherRaftPeers();
+
+		if (otherRaftPeers.isEmpty()) {
 			// todo
 			return;
 		}
@@ -65,20 +68,11 @@ public class CandidateState extends Thread {
 		BallotBox ballotBox = new BallotBox(xRaftNode.getState());
 		ballotBox.grantVote(xRaftNode.self());
 
-		long electionTerm;
-		if (preVote) {
-			electionTerm = xRaftNode.getState().getCurrentTerm().get();
-		}
-		else {
-			// todo
-			electionTerm = 0;
-		}
-
 		TermIndex lastEntry = xRaftNode.getRaftLog().getLastEntryTermIndex();
 
 		ExecutorCompletionService<RequestVoteResponse> voteExecutor = new ExecutorCompletionService<>(
-				Executors.newFixedThreadPool(otherPeers.size()));
-		for (RaftPeer raftPeer : otherPeers) {
+				Executors.newFixedThreadPool(otherRaftPeers.size()));
+		for (RaftPeer raftPeer : otherRaftPeers) {
 
 			// build request
 			RequestVoteRequest requestVoteRequest = new RequestVoteRequest();
@@ -93,7 +87,7 @@ public class CandidateState extends Thread {
 			voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(requestVoteRequest));
 		}
 
-		int waitNum = otherPeers.size();
+		int waitNum = otherRaftPeers.size();
 		while (waitNum > 0 && shouldRun()) {
 
 		}

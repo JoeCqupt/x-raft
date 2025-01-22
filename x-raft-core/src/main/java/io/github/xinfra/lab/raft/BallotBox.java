@@ -1,12 +1,13 @@
 package io.github.xinfra.lab.raft;
 
+import java.util.List;
 import java.util.Set;
 
 public class BallotBox {
 
 	private RaftNodeState state;
 
-	Set<RaftPeer> votedPeers;
+	List<RaftPeer> votedPeers;
 
 	public BallotBox(RaftNodeState state) {
 		this.state = state;
