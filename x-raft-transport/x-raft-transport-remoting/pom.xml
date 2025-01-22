@@ -2,30 +2,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.github.xinfra.lab</groupId>
-        <artifactId>x-raft</artifactId>
+        <groupId>io.github.xinfra.lab.raft</groupId>
+        <artifactId>x-raft-transport</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.github.xinfra.lab.raft</groupId>
-    <artifactId>x-raft-api</artifactId>
+    <artifactId>x-raft-transport-remoting</artifactId>
     <packaging>jar</packaging>
 
-    <name>x-raft-api</name>
+    <name>x-raft-transport-remoting</name>
+    <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
     </dependencies>
 </project>

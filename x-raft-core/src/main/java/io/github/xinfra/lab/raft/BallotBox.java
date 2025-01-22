@@ -3,21 +3,23 @@ package io.github.xinfra.lab.raft;
 import java.util.Set;
 
 public class BallotBox {
-    private RaftNodeState state;
-    Set<RaftPeer> votedPeers;
 
-    public BallotBox(RaftNodeState state) {
-        this.state = state;
-    }
+	private RaftNodeState state;
 
+	Set<RaftPeer> votedPeers;
 
-    public void grantVote(RaftPeer peer) {
+	public BallotBox(RaftNodeState state) {
+		this.state = state;
+	}
 
-        votedPeers.add(peer);
-    }
+	public void grantVote(RaftPeer peer) {
 
-    public boolean isMajorityGranted() {
-        // todo
-        return false;
-    }
+		votedPeers.add(peer);
+	}
+
+	public boolean isMajorityGranted() {
+		// todo
+		return false;
+	}
+
 }

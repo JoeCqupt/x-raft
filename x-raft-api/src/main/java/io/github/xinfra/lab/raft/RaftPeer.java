@@ -5,6 +5,8 @@ import lombok.Data;
 @Data
 public class RaftPeer {
 
-    private String raftPeerId;
+	private String raftPeerId;
+
+	private String address;
 
 }

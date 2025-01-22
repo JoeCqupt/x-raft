@@ -12,10 +12,24 @@
     <packaging>pom</packaging>
 
     <name>x-raft-transport</name>
+    <modules>
+        <module>x-raft-transport-remoting</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.xinfra.lab.raft</groupId>
+            <artifactId>x-raft-api</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>

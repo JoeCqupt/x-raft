@@ -4,12 +4,20 @@ import lombok.Getter;
 
 public class RaftConfigurationManager {
 
-    @Getter
-    private RaftConfiguration initialConfiguration;
+	private String raftPeerId;
+	@Getter
+	private RaftConfiguration initialConfiguration;
 
-    public RaftConfigurationManager(RaftConfiguration initialConfiguration) {
-        this.initialConfiguration = initialConfiguration;
-    }
+	private RaftConfiguration currentConfiguration;
 
 
+	public RaftConfigurationManager(String raftPeerId, RaftConfiguration initialConfiguration) {
+		this.raftPeerId = raftPeerId;
+		this.initialConfiguration = initialConfiguration;
+		setCurrentConfiguration(initialConfiguration);
+	}
+
+	public void setCurrentConfiguration(RaftConfiguration configuration) {
+		this.currentConfiguration = configuration;
+	}
 }

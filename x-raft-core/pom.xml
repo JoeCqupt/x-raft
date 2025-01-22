@@ -21,10 +21,17 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.github.xinfra.lab.raft</groupId>
             <artifactId>x-raft-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.xinfra.lab.raft</groupId>
+            <artifactId>x-raft-transport-remoting</artifactId>
+            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

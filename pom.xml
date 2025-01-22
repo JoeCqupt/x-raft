@@ -28,6 +28,12 @@
       </dependency>
 
       <dependency>
+        <groupId>io.github.xinfra.lab.raft</groupId>
+        <artifactId>x-raft-transport-remoting</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>2.0.16</version>
@@ -42,4 +48,23 @@
 
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.spring.javaformat</groupId>
+        <artifactId>spring-javaformat-maven-plugin</artifactId>
+        <version>0.0.42</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <inherited>true</inherited>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
