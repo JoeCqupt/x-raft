@@ -14,7 +14,7 @@ public class RaftConfigurationState {
 	private Long logIndex;
 
 
-	public RaftConfigurationState( RaftConfiguration initialConfiguration) {
+	public RaftConfigurationState(RaftConfiguration initialConfiguration) {
 		this.initialConfiguration = initialConfiguration;
 		setCurrentConfiguration(initialConfiguration);
 	}

@@ -20,7 +20,7 @@ public class RaftNodeState {
     private final XRaftNode xRaftNode;
 
 
-    private RaftConfigurationState raftConfigurationState;
+    private final RaftConfigurationState raftConfigurationState;
 
     private final AtomicReference<FollowerState> followerState = new AtomicReference<>();
 
@@ -30,7 +30,7 @@ public class RaftNodeState {
 
     public RaftNodeState(XRaftNode xRaftNode) {
         this.xRaftNode = xRaftNode;
-        RaftConfiguration initialConfiguration = new RaftConfiguration( xRaftNode.self(),null,
+        RaftConfiguration initialConfiguration = new RaftConfiguration(xRaftNode.self(),null,
                 new PeerConfiguration(xRaftNode.getRaftGroup().getRaftPeers(),
                         xRaftNode.getRaftGroup().getLearners()));
         this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);

@@ -24,7 +24,12 @@ public class CandidateState extends Thread {
 			try {
 				if (preVote()) {
 					if (vote()) {
-						xRaftNode.changeToLeader();
+						synchronized (xRaftNode) {
+							if (shouldRun()) {
+								xRaftNode.changeToLeader();
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -42,20 +47,25 @@ public class CandidateState extends Thread {
 	private boolean preVote() {
 		long electionTerm;
 		RaftConfiguration raftConfiguration;
+		TermIndex lastEntryTermIndex;
 		synchronized (xRaftNode) {
 			if (!shouldRun()) {
 				return false;
 			}
-
 			electionTerm = xRaftNode.getState().getCurrentTerm().get();
-			 raftConfiguration = xRaftNode.getState().getRaftConfiguration();
+			raftConfiguration = xRaftNode.getState().getRaftConfiguration();
+			lastEntryTermIndex = xRaftNode.getRaftLog().getLastEntryTermIndex();
 		}
 
-		sendVoteRequests(true, electionTerm, raftConfiguration);
+		VoteResult voteResult = sendVoteRequests(true, electionTerm, raftConfiguration, lastEntryTermIndex);
 		return false;
 	}
 
-	private void sendVoteRequests(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration) {
+	private VoteResult sendVoteRequests(boolean preVote,
+								  long electionTerm,
+								  RaftConfiguration raftConfiguration,
+								  TermIndex lastEntryTermIndex) {
+		if ((raftConfiguration.))
 
 		Set<RaftPeer> otherRaftPeers = raftConfiguration.getOtherRaftPeers();
 
@@ -68,7 +78,6 @@ public class CandidateState extends Thread {
 		BallotBox ballotBox = new BallotBox(xRaftNode.getState());
 		ballotBox.grantVote(xRaftNode.self());
 
-		TermIndex lastEntry = xRaftNode.getRaftLog().getLastEntryTermIndex();
 
 		ExecutorCompletionService<RequestVoteResponse> voteExecutor = new ExecutorCompletionService<>(
 				Executors.newFixedThreadPool(otherRaftPeers.size()));
@@ -79,8 +88,8 @@ public class CandidateState extends Thread {
 			requestVoteRequest.setPreVote(preVote);
 			requestVoteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
 			requestVoteRequest.setTerm(electionTerm);
-			requestVoteRequest.setLastLogIndex(lastEntry.getIndex());
-			requestVoteRequest.setLastLogTerm(lastEntry.getTerm());
+			requestVoteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
+			requestVoteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
 			requestVoteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
 			requestVoteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
 
@@ -101,4 +110,10 @@ public class CandidateState extends Thread {
 		running = false;
 	}
 
+	enum Status {
+		PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN
+	}
+	static class VoteResult {
+
+	}
 }
