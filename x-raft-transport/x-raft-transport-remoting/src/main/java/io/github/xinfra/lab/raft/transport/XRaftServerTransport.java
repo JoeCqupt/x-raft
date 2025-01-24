@@ -4,8 +4,8 @@ import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftServerTransport;
-import io.github.xinfra.lab.raft.RequestVoteRequest;
-import io.github.xinfra.lab.raft.RequestVoteResponse;
+import io.github.xinfra.lab.raft.VoteRequest;
+import io.github.xinfra.lab.raft.VoteResponse;
 
 import java.util.Set;
 
@@ -22,9 +22,8 @@ public class XRaftServerTransport extends AbstractLifeCycle implements RaftServe
 		// todo
 	}
 
-
 	@Override
-	public RequestVoteResponse requestVote(RequestVoteRequest requestVoteRequest) {
+	public VoteResponse requestVote(VoteRequest voteRequest) {
 		// todo
 		return null;
 	}

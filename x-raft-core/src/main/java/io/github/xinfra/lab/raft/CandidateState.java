@@ -1,8 +1,10 @@
 package io.github.xinfra.lab.raft;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
@@ -61,45 +63,46 @@ public class CandidateState extends Thread {
 		return false;
 	}
 
-	private VoteResult sendVoteRequests(boolean preVote,
-								  long electionTerm,
-								  RaftConfiguration raftConfiguration,
-								  TermIndex lastEntryTermIndex) {
-		if ((raftConfiguration.))
-
-		Set<RaftPeer> otherRaftPeers = raftConfiguration.getOtherRaftPeers();
-
-		if (otherRaftPeers.isEmpty()) {
-			// todo
-			return;
+	private VoteResult sendVoteRequests(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration,
+			TermIndex lastEntryTermIndex) {
+		if (!(raftConfiguration.getConf().getVotingPeers().contains(xRaftNode.self()))) {
+			return new VoteResult(electionTerm, Status.NOT_IN_CONF);
 		}
 
+		Set<RaftPeer> otherRaftPeers = raftConfiguration.getVotingRaftPeers();
+		if (otherRaftPeers.isEmpty()) {
+			return new VoteResult(electionTerm, Status.PASSED);
+		}
+
+		// init ballot box
+		BallotBox ballotBox = new BallotBox(raftConfiguration);
 		// vote to self
-		BallotBox ballotBox = new BallotBox(xRaftNode.getState());
 		ballotBox.grantVote(xRaftNode.self());
 
-
-		ExecutorCompletionService<RequestVoteResponse> voteExecutor = new ExecutorCompletionService<>(
+		ExecutorCompletionService<VoteResponse> voteExecutor = new ExecutorCompletionService<>(
 				Executors.newFixedThreadPool(otherRaftPeers.size()));
 		for (RaftPeer raftPeer : otherRaftPeers) {
 
 			// build request
-			RequestVoteRequest requestVoteRequest = new RequestVoteRequest();
-			requestVoteRequest.setPreVote(preVote);
-			requestVoteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
-			requestVoteRequest.setTerm(electionTerm);
-			requestVoteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
-			requestVoteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
-			requestVoteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
-			requestVoteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
+			VoteRequest voteRequest = new VoteRequest();
+			voteRequest.setPreVote(preVote);
+			voteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
+			voteRequest.setTerm(electionTerm);
+			voteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
+			voteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
+			voteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
+			voteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
 
-			voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(requestVoteRequest));
+			voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));
 		}
 
 		int waitNum = otherRaftPeers.size();
 		while (waitNum > 0 && shouldRun()) {
 
 		}
+
+		// todo
+		return 	null;
 	}
 
 	private boolean shouldRun() {
@@ -111,9 +114,20 @@ public class CandidateState extends Thread {
 	}
 
 	enum Status {
-		PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN
-	}
-	static class VoteResult {
+
+		PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN, NOT_IN_CONF
 
 	}
+
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	static class VoteResult {
+
+		private long term;
+
+		private Status status;
+
+	}
+
 }

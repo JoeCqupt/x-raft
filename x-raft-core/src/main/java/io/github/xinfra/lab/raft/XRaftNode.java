@@ -10,6 +10,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	private RaftGroup raftGroup;
 
 	private RaftNodeConfig config;
+
 	@Getter
 	private RaftNodeState state;
 
@@ -41,7 +42,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	public void startup() {
 		super.startup();
 		raftServerTransport.startup();
-		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getOtherRaftPeers());
+		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getRaftPeers());
 		changeToFollower();
 	}
 
@@ -52,7 +53,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public RequestVoteResponse requestVote(RequestVoteRequest requestVoteRequest) {
+	public VoteResponse requestVote(VoteRequest voteRequest) {
 		// todo
 		return null;
 	}

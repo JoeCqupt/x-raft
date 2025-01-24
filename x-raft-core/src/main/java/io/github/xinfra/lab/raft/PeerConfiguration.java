@@ -3,23 +3,32 @@ package io.github.xinfra.lab.raft;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class PeerConfiguration {
 
 	/**
+	 * All peers in the raft group.
+	 */
+	private final Set<RaftPeer> peers;
+
+	/**
 	 * Peers are voting members such as LEADER, CANDIDATE and FOLLOWER
 	 */
-	private final List<RaftPeer> peers;
+	private final Set<RaftPeer> votingPeers;
 
 	/**
 	 * Listeners are non-voting members.
 	 */
-	private final List<RaftPeer> learners;
+	private final Set<RaftPeer> nonVotingPeers;
 
-	public PeerConfiguration(List<RaftPeer> peers, List<RaftPeer> learners) {
+	public PeerConfiguration(Set<RaftPeer> peers) {
 		this.peers = peers;
-		this.learners = learners;
+
+		this.votingPeers = peers.stream().filter(p -> p.getRole() != RaftRole.LEADER).collect(Collectors.toSet());
+		this.nonVotingPeers = peers.stream().filter(p -> p.getRole() == RaftRole.LEADER).collect(Collectors.toSet());
 	}
+
 }

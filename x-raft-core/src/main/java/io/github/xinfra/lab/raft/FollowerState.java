@@ -26,7 +26,7 @@ public class FollowerState extends Thread {
 				synchronized (xRaftNode) {
 					if (shouldRun() && timeout(electionTimeout)) {
 						xRaftNode.changeToCandidate();
-                        break;
+						break;
 					}
 				}
 			}

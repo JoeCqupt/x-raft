@@ -10,13 +10,11 @@ public class RaftGroup {
 
 	private String raftGroupId;
 
-	private List<RaftPeer> raftPeers;
+	private Set<RaftPeer> peers;
 
-	private List<RaftPeer> learners;
-
-	public RaftGroup(String raftGroupId, List<RaftPeer> raftPeers) {
+	public RaftGroup(String raftGroupId, Set<RaftPeer> peers) {
 		this.raftGroupId = raftGroupId;
-		this.raftPeers = raftPeers;
+		this.peers = peers;
 	}
 
 }

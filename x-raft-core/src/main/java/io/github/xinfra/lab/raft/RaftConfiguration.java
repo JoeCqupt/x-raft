@@ -28,15 +28,23 @@ public class RaftConfiguration {
 		this.conf = conf;
 	}
 
-	public Set<RaftPeer> getOtherRaftPeers() {
+	public Set<RaftPeer> getVotingRaftPeers() {
 		Set<RaftPeer> set = new HashSet<>();
 		set.addAll(conf.getPeers());
-		if (oldConf!=null){
+		if (oldConf != null) {
 			set.addAll(oldConf.getPeers());
 		}
 		set.remove(selfRaftPeer);
 		return set;
 	}
 
+	public Set<RaftPeer> getRaftPeers() {
+		Set<RaftPeer> set = new HashSet<>();
+		set.addAll(conf.getPeers());
+		if (oldConf != null) {
+			set.addAll(oldConf.getPeers());
+		}
+		return set;
+	}
 
 }
