@@ -9,7 +9,7 @@ public class FollowerState extends Thread {
 
 	private final XRaftNode xRaftNode;
 
-	private volatile Long lastRpcTime = System.currentTimeMillis();
+	private volatile Long lastRpcTimeMills = System.currentTimeMillis();
 
 	private volatile boolean running = true;
 
@@ -21,10 +21,10 @@ public class FollowerState extends Thread {
 	public void run() {
 		while (shouldRun()) {
 			try {
-				Long electionTimeout = xRaftNode.getRandomElectionTimeout();
-				TimeUnit.MILLISECONDS.sleep(electionTimeout);
+				Long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
+				TimeUnit.MILLISECONDS.sleep(electionTimeoutMills);
 				synchronized (xRaftNode) {
-					if (shouldRun() && timeout(electionTimeout)) {
+					if (shouldRun() && timeout(electionTimeoutMills)) {
 						xRaftNode.changeToCandidate();
 						break;
 					}
@@ -41,12 +41,12 @@ public class FollowerState extends Thread {
 		}
 	}
 
-	public void updateLastRpcTime(Long lastRpcTime) {
-		this.lastRpcTime = lastRpcTime;
+	public void updateLastRpcTimeMills(Long lastRpcTimeMills) {
+		this.lastRpcTimeMills = lastRpcTimeMills;
 	}
 
 	private boolean timeout(Long electionTimeout) {
-		return System.currentTimeMillis() - lastRpcTime > electionTimeout;
+		return System.currentTimeMillis() - lastRpcTimeMills >= electionTimeout;
 	}
 
 	public boolean shouldRun() {

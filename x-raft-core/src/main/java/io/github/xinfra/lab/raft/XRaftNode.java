@@ -3,13 +3,15 @@ package io.github.xinfra.lab.raft;
 import io.github.xinfra.lab.raft.transport.RaftServerTransportFactory;
 import lombok.Getter;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private RaftPeer raftPeer;
 
 	private RaftGroup raftGroup;
 
-	private RaftNodeConfig config;
+	private RaftNodeConfig raftNodeConfig;
 
 	@Getter
 	private RaftNodeState state;
@@ -20,12 +22,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private RaftServerTransport raftServerTransport;
 
-	public XRaftNode(RaftPeer raftPeer, RaftGroup raftGroup, RaftNodeConfig config) {
+	public XRaftNode(RaftPeer raftPeer, RaftGroup raftGroup, RaftNodeConfig raftNodeConfig) {
 		this.raftPeer = raftPeer;
 		this.raftGroup = raftGroup;
-		this.config = config;
+		this.raftNodeConfig = raftNodeConfig;
 		this.state = new RaftNodeState(this);
-		this.raftServerTransport = RaftServerTransportFactory.create(config.getTransportType(), this);
+		this.raftServerTransport = RaftServerTransportFactory.create(raftNodeConfig.getTransportType(), this);
 	}
 
 	@Override
@@ -58,9 +60,10 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return null;
 	}
 
-	public Long getRandomElectionTimeout() {
-		// todo
-		return null;
+	public Long getRandomElectionTimeoutMills() {
+		Long min = raftNodeConfig.getMinRpcTimeoutMills();
+		Long max = raftNodeConfig.getMaxRpcTimeoutMills();
+		return min + ThreadLocalRandom.current().nextLong(max - min) + 1;
 	}
 
 	private synchronized void changeToFollower() {
@@ -81,6 +84,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	public synchronized void changeToLeader() {
 		state.shutdownCandidateState();
 		state.startLeaderState();
+	}
+
+	@Override
+	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
+		// todo
+		return null;
 	}
 
 }

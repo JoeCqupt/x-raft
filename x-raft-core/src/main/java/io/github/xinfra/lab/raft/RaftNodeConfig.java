@@ -8,4 +8,8 @@ public class RaftNodeConfig {
 
 	private TransportType transportType;
 
+	private Long minRpcTimeoutMills = 100L;
+
+	private Long maxRpcTimeoutMills = 300L;
+
 }

@@ -2,7 +2,6 @@ package io.github.xinfra.lab.raft;
 
 import lombok.Data;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,9 +25,14 @@ public class PeerConfiguration {
 
 	public PeerConfiguration(Set<RaftPeer> peers) {
 		this.peers = peers;
+		this.votingPeers = peers.stream().filter(p -> p.getRole() != RaftRole.LEARNER).collect(Collectors.toSet());
+		this.nonVotingPeers = peers.stream().filter(p -> p.getRole() == RaftRole.LEARNER).collect(Collectors.toSet());
+	}
 
-		this.votingPeers = peers.stream().filter(p -> p.getRole() != RaftRole.LEADER).collect(Collectors.toSet());
-		this.nonVotingPeers = peers.stream().filter(p -> p.getRole() == RaftRole.LEADER).collect(Collectors.toSet());
+	public boolean hasVotingPeersMajority(Set<String> peerIds) {
+		return votingPeers.stream()
+			.filter(peer -> peerIds.contains(peer.getRaftPeerId()))
+			.count() > (votingPeers.size() / 2);
 	}
 
 }
