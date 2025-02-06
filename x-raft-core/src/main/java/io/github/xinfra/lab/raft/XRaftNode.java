@@ -98,4 +98,5 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		state.shutdownCandidateState();
 		state.startLeaderState();
 	}
+
 }
