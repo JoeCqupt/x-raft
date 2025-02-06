@@ -41,8 +41,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public synchronized void startup() {
 		super.startup();
+		// todo: init raft storage
+		// todo: init raft log
+		// todo: init state machine
 		raftServerTransport.startup();
 		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getRaftPeers());
+		// todo: start role by config
 		changeToFollower();
 	}
 
