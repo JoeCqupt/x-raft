@@ -41,7 +41,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public void startup() {
+	public synchronized void startup() {
 		super.startup();
 		raftServerTransport.startup();
 		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getRaftPeers());
@@ -49,13 +49,18 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public void shutdown() {
+	public synchronized void shutdown() {
 		super.shutdown();
-
 	}
 
 	@Override
 	public VoteResponse requestVote(VoteRequest voteRequest) {
+		// todo
+		return null;
+	}
+
+	@Override
+	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
 		// todo
 		return null;
 	}
@@ -66,7 +71,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return min + ThreadLocalRandom.current().nextLong(max - min) + 1;
 	}
 
-	private synchronized void changeToFollower() {
+	public synchronized void changeToFollower() {
 		if (state.getRole() == RaftRole.CANDIDATE) {
 			state.shutdownCandidateState();
 		}
@@ -74,6 +79,14 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 			state.shutdownLeaderState();
 		}
 		state.startFollowerState();
+	}
+
+	/**
+	 * new term discovered, change to follower
+	 * @param newTerm
+	 */
+	public synchronized void changeToFollower(long newTerm) {
+		// todo
 	}
 
 	public synchronized void changeToCandidate() {
@@ -85,11 +98,4 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		state.shutdownCandidateState();
 		state.startLeaderState();
 	}
-
-	@Override
-	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
-		// todo
-		return null;
-	}
-
 }
