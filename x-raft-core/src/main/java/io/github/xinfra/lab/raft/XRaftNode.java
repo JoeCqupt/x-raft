@@ -2,6 +2,7 @@ package io.github.xinfra.lab.raft;
 
 import io.github.xinfra.lab.raft.transport.RaftServerTransportFactory;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -15,9 +16,6 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	@Getter
 	private RaftNodeState state;
-
-	@Getter
-	private RaftLog raftLog;
 
 	@Getter
 	private RaftServerTransport raftServerTransport;

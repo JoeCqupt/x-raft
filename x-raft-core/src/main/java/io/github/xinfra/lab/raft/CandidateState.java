@@ -27,8 +27,8 @@ public class CandidateState extends Thread {
 	public void run() {
 		while (shouldRun()) {
 			try {
-				if (preVote()) {
-					if (vote()) {
+				if (askForVotes(true)) {
+					if (askForVotes(false)) {
 						synchronized (xRaftNode) {
 							if (shouldRun()) {
 								xRaftNode.changeToLeader();
@@ -44,12 +44,7 @@ public class CandidateState extends Thread {
 		}
 	}
 
-	private boolean vote() {
-		// todo
-		return false;
-	}
-
-	private boolean preVote() throws InterruptedException {
+	private boolean askForVotes(boolean preVote) throws InterruptedException {
 		long electionTerm;
 		RaftConfiguration raftConfiguration;
 		TermIndex lastEntryTermIndex;
@@ -57,12 +52,21 @@ public class CandidateState extends Thread {
 			if (!shouldRun()) {
 				return false;
 			}
-			electionTerm = xRaftNode.getState().getCurrentTerm().get();
+			// todo: notify state machine
+			xRaftNode.getState().getLeaderId().getAndSet(null);
+			if (preVote) {
+				electionTerm = xRaftNode.getState().getCurrentTerm().get();
+			}
+			else {
+				electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
+				xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.self().getRaftPeerId());
+				xRaftNode.getState().persistMetadata();
+			}
 			raftConfiguration = xRaftNode.getState().getRaftConfiguration();
-			lastEntryTermIndex = xRaftNode.getRaftLog().getLastEntryTermIndex();
+			lastEntryTermIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
 		}
 
-		VoteResult voteResult = doVote(true, electionTerm, raftConfiguration, lastEntryTermIndex);
+		VoteResult voteResult = askForVotes(preVote, electionTerm, raftConfiguration, lastEntryTermIndex);
 
 		synchronized (xRaftNode) {
 			if (!shouldRun()) {
@@ -91,7 +95,7 @@ public class CandidateState extends Thread {
 		}
 	}
 
-	private VoteResult doVote(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration,
+	private VoteResult askForVotes(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration,
 			TermIndex lastEntryTermIndex) throws InterruptedException {
 		if (!(raftConfiguration.getConf().getVotingPeers().contains(xRaftNode.self()))) {
 			return new VoteResult(electionTerm, Status.NOT_IN_CONF);

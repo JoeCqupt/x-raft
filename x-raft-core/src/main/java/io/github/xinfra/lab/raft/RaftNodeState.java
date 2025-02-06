@@ -1,6 +1,7 @@
 package io.github.xinfra.lab.raft;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,9 +11,16 @@ public class RaftNodeState {
 	@Getter
 	private final AtomicLong currentTerm = new AtomicLong();
 
-	private volatile RaftPeer leaderId;
+	@Getter
+	@Setter
+	private volatile AtomicReference<String> votedFor;
 
-	private volatile RaftPeer votedFor;
+	@Setter
+	@Getter
+	private volatile AtomicReference<String> leaderId;
+
+	@Getter
+	private RaftLog raftLog;
 
 	@Getter
 	private volatile RaftRole role;
@@ -70,6 +78,10 @@ public class RaftNodeState {
 
 	public RaftConfiguration getRaftConfiguration() {
 		return raftConfigurationState.getCurrentConfiguration();
+	}
+
+	public void persistMetadata() {
+		raftLog.persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
 
 }

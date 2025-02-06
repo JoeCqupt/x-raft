@@ -7,4 +7,6 @@ public interface RaftLog {
 	 */
 	TermIndex getLastEntryTermIndex();
 
+	void persistMetadata(RaftMetadata raftMetadata);
+
 }
