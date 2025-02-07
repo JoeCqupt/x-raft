@@ -30,9 +30,9 @@ public class RaftConfiguration {
 
 	public Set<RaftPeer> getVotingRaftPeers() {
 		Set<RaftPeer> set = new HashSet<>();
-		set.addAll(conf.getPeers());
+		set.addAll(conf.getVotingPeers());
 		if (oldConf != null) {
-			set.addAll(oldConf.getPeers());
+			set.addAll(oldConf.getVotingPeers());
 		}
 		set.remove(selfRaftPeer);
 		return set;
@@ -44,6 +44,7 @@ public class RaftConfiguration {
 		if (oldConf != null) {
 			set.addAll(oldConf.getPeers());
 		}
+		set.remove(selfRaftPeer);
 		return set;
 	}
 

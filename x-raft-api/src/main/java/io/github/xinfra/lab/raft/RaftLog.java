@@ -9,4 +9,8 @@ public interface RaftLog {
 
 	void persistMetadata(RaftMetadata raftMetadata);
 
+	void append(LogEntry logEntry);
+
+	Long getNextIndex();
+
 }

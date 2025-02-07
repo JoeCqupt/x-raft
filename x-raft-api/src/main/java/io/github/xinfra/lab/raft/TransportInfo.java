@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public abstract class RaftMessage implements Serializable {
+public abstract class TransportInfo implements Serializable {
 
 	String requestPeerId;
 

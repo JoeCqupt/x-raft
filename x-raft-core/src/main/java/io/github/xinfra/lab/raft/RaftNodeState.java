@@ -74,6 +74,11 @@ public class RaftNodeState {
 	}
 
 	public void shutdownLeaderState() {
+		LeaderState leader = leaderState.getAndSet(null);
+		if (leader != null) {
+			leader.shutdown();
+			leader.interrupt();
+		}
 	}
 
 	public RaftConfiguration getRaftConfiguration() {

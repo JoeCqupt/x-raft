@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class VoteRequest extends RaftMessage implements Serializable {
+public class VoteRequest extends TransportInfo implements Serializable {
 
 	private Long term;
 

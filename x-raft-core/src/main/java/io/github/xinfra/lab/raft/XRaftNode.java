@@ -62,6 +62,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
+	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
+		// todo
+		return null;
+	}
+
+	@Override
 	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
 		// todo
 		return null;

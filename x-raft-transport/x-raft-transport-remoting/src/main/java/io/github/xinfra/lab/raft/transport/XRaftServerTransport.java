@@ -1,6 +1,8 @@
 package io.github.xinfra.lab.raft.transport;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
+import io.github.xinfra.lab.raft.AppendEntriesRequest;
+import io.github.xinfra.lab.raft.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftServerTransport;
@@ -24,6 +26,12 @@ public class XRaftServerTransport extends AbstractLifeCycle implements RaftServe
 
 	@Override
 	public VoteResponse requestVote(VoteRequest voteRequest) {
+		// todo
+		return null;
+	}
+
+	@Override
+	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
 		// todo
 		return null;
 	}
