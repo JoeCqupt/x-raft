@@ -2,7 +2,6 @@ package io.github.xinfra.lab.raft;
 
 import io.github.xinfra.lab.raft.transport.RaftServerTransportFactory;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,6 +35,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public RaftGroup getRaftGroup() {
 		return raftGroup;
+	}
+
+	@Override
+	public RaftNodeConfig getRaftNodeConfig() {
+		return raftNodeConfig;
 	}
 
 	@Override
@@ -73,10 +77,10 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return null;
 	}
 
-	public Long getRandomElectionTimeoutMills() {
-		Long min = raftNodeConfig.getMinRpcTimeoutMills();
-		Long max = raftNodeConfig.getMaxRpcTimeoutMills();
-		return min + ThreadLocalRandom.current().nextLong(max - min) + 1;
+	public long getRandomElectionTimeoutMills() {
+		long timeoutMills = raftNodeConfig.getElectionTimeoutMills();
+		long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
+		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
 
 	public synchronized void changeToFollower() {

@@ -14,12 +14,14 @@ public class LogAppender extends Thread {
 
 	private final XRaftNode xRaftNode;
 
-	private Long nextIndex;
+	private long nextIndex;
 
-	private Long matchIndex = -1L;
+	private long matchIndex = -1L;
 
 	// todo : await and notify
 	private final Lock awaitLock = new ReentrantLock();
+
+	private long lastAppendSendTime;
 
 	public LogAppender(RaftPeer raftPeer, XRaftNode xRaftNode) {
 		this.raftPeer = raftPeer;
@@ -38,16 +40,23 @@ public class LogAppender extends Thread {
 
 	private void sendAppendEntries() {
 		// todo
+
 	}
 
 	private boolean shouldAppend() {
-
-		return hasEntries() || heartbeatTimeoutMills() <= 0;
+		return hasEntries() || heartbeatLeftTimeMills() <= 0;
 	}
 
-	private long heartbeatTimeoutMills() {
-		// todo : to calculate it
-		return 0;
+	private long heartbeatLeftTimeMills() {
+		if (lastAppendSendTime == 0) {
+			// run first time
+			return 0;
+		}
+		// todo: to calculate it
+		// todo: why
+		long electionTimeoutMills = xRaftNode.getRaftNodeConfig().getElectionTimeoutMills();
+		long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
+		return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
 	}
 
 	private boolean hasEntries() {

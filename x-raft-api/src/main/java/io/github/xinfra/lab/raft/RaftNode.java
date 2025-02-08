@@ -6,4 +6,6 @@ public interface RaftNode extends LifeCycle, RaftServerProtocol, RaftClientProto
 
 	RaftGroup getRaftGroup();
 
+	RaftNodeConfig getRaftNodeConfig();
+
 }

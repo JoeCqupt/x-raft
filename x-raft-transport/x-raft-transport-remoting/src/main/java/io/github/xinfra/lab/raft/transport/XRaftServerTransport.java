@@ -26,6 +26,7 @@ public class XRaftServerTransport extends AbstractLifeCycle implements RaftServe
 
 	@Override
 	public VoteResponse requestVote(VoteRequest voteRequest) {
+		Long timeoutMills = raftNode.getRaftNodeConfig().getRpcTimeoutMills();
 		// todo
 		return null;
 	}

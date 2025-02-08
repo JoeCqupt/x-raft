@@ -129,7 +129,7 @@ public class CandidateState extends Thread {
 		}
 
 		int waitNum = otherRaftPeers.size();
-		Long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
+		long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
 
 		while (waitNum > 0 && shouldRun()) {
 			long leftTimeMills = electionEndTimeMills - System.currentTimeMillis();

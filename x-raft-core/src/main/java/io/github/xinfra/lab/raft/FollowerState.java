@@ -21,7 +21,7 @@ public class FollowerState extends Thread {
 	public void run() {
 		while (shouldRun()) {
 			try {
-				Long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
+				long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
 				TimeUnit.MILLISECONDS.sleep(electionTimeoutMills);
 				synchronized (xRaftNode) {
 					if (shouldRun() && timeout(electionTimeoutMills)) {
@@ -45,7 +45,7 @@ public class FollowerState extends Thread {
 		this.lastRpcTimeMills = lastRpcTimeMills;
 	}
 
-	private boolean timeout(Long electionTimeout) {
+	private boolean timeout(long electionTimeout) {
 		return System.currentTimeMillis() - lastRpcTimeMills >= electionTimeout;
 	}
 
