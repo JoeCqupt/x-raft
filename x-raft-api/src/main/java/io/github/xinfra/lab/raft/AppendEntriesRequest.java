@@ -1,11 +1,13 @@
 package io.github.xinfra.lab.raft;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Data
+@Setter
+@Getter
 public class AppendEntriesRequest extends TransportInfo implements Serializable {
 
 	private Long term;

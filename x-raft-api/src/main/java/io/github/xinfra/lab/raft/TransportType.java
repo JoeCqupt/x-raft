@@ -1,7 +1,7 @@
 package io.github.xinfra.lab.raft;
 
-public enum TransportType {
+public interface TransportType {
 
-	xremoting, grpc,;
+	RaftServerTransport newTransport(RaftNode raftNode);
 
 }

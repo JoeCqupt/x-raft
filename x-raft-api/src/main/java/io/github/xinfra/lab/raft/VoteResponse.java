@@ -1,10 +1,12 @@
 package io.github.xinfra.lab.raft;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
-@Data
+@Getter
+@Setter
 public class VoteResponse extends TransportInfo implements Serializable {
 
 	int term;

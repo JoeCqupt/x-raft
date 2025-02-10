@@ -1,6 +1,5 @@
 package io.github.xinfra.lab.raft;
 
-import io.github.xinfra.lab.raft.transport.RaftServerTransportFactory;
 import lombok.Getter;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,8 +22,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		this.raftPeer = raftPeer;
 		this.raftGroup = raftGroup;
 		this.raftNodeConfig = raftNodeConfig;
+		this.raftServerTransport = raftNodeConfig.getTransportType().newTransport(this);
 		this.state = new RaftNodeState(this);
-		this.raftServerTransport = RaftServerTransportFactory.create(raftNodeConfig.getTransportType(), this);
 	}
 
 	@Override
