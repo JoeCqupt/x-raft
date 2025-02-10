@@ -7,6 +7,8 @@ public class RaftNodeConfig {
 
 	private TransportType transportType;
 
+	private RaftLogType raftLogType;
+
 	private long electionTimeoutMills = 150L;
 
 	private long electionTimeoutDelayMills = 150L;

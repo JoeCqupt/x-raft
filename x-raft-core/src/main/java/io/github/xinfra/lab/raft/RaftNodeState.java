@@ -13,11 +13,11 @@ public class RaftNodeState {
 
 	@Getter
 	@Setter
-	private volatile AtomicReference<String> votedFor;
+	private volatile AtomicReference<String> votedFor = new AtomicReference<>(null);
 
 	@Setter
 	@Getter
-	private volatile AtomicReference<String> leaderId;
+	private volatile AtomicReference<String> leaderId = new AtomicReference<>(null);
 
 	@Getter
 	private RaftLog raftLog;
