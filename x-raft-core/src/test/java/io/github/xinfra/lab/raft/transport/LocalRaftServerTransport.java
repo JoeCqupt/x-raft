@@ -16,11 +16,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * for unit test
+ */
 public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftServerTransport {
 
-	List<RaftNode> raftNodes;
+	List<RaftNode> raftPeerNodes;
 
-	Map<RaftPeer, RaftNode> raftNodeMap;
+	Map<RaftPeer, RaftNode> raftPeerNodeMap;
 
 	Map<String, RaftPeer> raftPeerMap;
 
@@ -30,9 +33,9 @@ public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftS
 		}
 		LocalXRaftNode localRaftNode = (LocalXRaftNode) raftNode;
 
-		this.raftNodes = localRaftNode.otherRaftNodes();
-		this.raftNodeMap = raftNodes.stream().collect(Collectors.toMap(RaftNode::self, Function.identity()));
-		addRaftPeers(raftNodeMap.keySet());
+		this.raftPeerNodes = localRaftNode.raftPeerNodes();
+		this.raftPeerNodeMap = raftPeerNodes.stream().collect(Collectors.toMap(RaftNode::self, Function.identity()));
+		addRaftPeers(raftPeerNodeMap.keySet());
 	}
 
 	@Override
@@ -43,14 +46,14 @@ public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftS
 	@Override
 	public VoteResponse requestVote(VoteRequest voteRequest) {
 		RaftPeer raftPeer = raftPeerMap.get(voteRequest.getReplyPeerId());
-		RaftNode raftNode = raftNodeMap.get(raftPeer);
+		RaftNode raftNode = raftPeerNodeMap.get(raftPeer);
 		return raftNode.requestVote(voteRequest);
 	}
 
 	@Override
 	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
 		RaftPeer raftPeer = raftPeerMap.get(appendEntriesRequest.getReplyPeerId());
-		RaftNode raftNode = raftNodeMap.get(raftPeer);
+		RaftNode raftNode = raftPeerNodeMap.get(raftPeer);
 		return raftNode.appendEntries(appendEntriesRequest);
 	}
 

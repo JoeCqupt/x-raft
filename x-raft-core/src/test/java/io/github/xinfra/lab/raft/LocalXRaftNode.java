@@ -1,16 +1,29 @@
 package io.github.xinfra.lab.raft;
 
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * for unit test
+ */
 public class LocalXRaftNode extends XRaftNode {
 
-	public LocalXRaftNode(RaftPeer raftPeer, RaftGroup raftGroup, RaftNodeConfig raftNodeConfig) {
-		super(raftPeer, raftGroup, raftNodeConfig);
+	private List<RaftNode> raftPeerNodes = new ArrayList<>();
+
+	public LocalXRaftNode(RaftPeer raftPeer, RaftGroup raftGroup) {
+		super(raftPeer, raftGroup, new RaftNodeConfig());
 	}
 
-	public List<RaftNode> otherRaftNodes() {
-		// todo
-		return null;
+	/**
+	 * get all raft peer nodes
+	 * @return
+	 */
+	public List<RaftNode> raftPeerNodes() {
+		return raftPeerNodes;
+	}
+
+	public void addRaftPeerNode(RaftNode raftNode) {
+		raftPeerNodes.add(raftNode);
 	}
 
 }
