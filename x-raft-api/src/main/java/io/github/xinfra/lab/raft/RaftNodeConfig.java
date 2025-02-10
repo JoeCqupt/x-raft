@@ -7,10 +7,10 @@ public class RaftNodeConfig {
 
 	private TransportType transportType;
 
-	private long electionTimeoutMills = 1000L;
+	private long electionTimeoutMills = 150L;
 
-	private long electionTimeoutDelayMills = 1000L;
+	private long electionTimeoutDelayMills = 150L;
 
-	private long rpcTimeoutMills = 3000L;
+	private long rpcTimeoutMills = 100L;
 
 }
