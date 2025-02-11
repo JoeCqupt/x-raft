@@ -1,21 +1,23 @@
 package io.github.xinfra.lab.raft;
 
+import lombok.Getter;
+
 import java.util.Comparator;
 
-public interface TermIndex extends Comparable<TermIndex> {
+@Getter
+public class TermIndex implements Comparable<TermIndex> {
 
-	/**
-	 * @return the term.
-	 */
-	long getTerm();
+	private long term;
 
-	/**
-	 * @return the index.
-	 */
-	long getIndex();
+	private long index;
+
+	public TermIndex(long term, long index) {
+		this.term = term;
+		this.index = index;
+	}
 
 	@Override
-	default int compareTo(TermIndex that) {
+	public int compareTo(TermIndex that) {
 		return Comparator.comparingLong(TermIndex::getTerm).thenComparingLong(TermIndex::getIndex).compare(this, that);
 	}
 

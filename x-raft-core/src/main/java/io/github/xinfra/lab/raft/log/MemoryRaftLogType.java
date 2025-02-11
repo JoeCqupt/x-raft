@@ -5,10 +5,12 @@ import io.github.xinfra.lab.raft.RaftLogType;
 import io.github.xinfra.lab.raft.RaftNode;
 
 public enum MemoryRaftLogType implements RaftLogType {
-    mem;
 
-    @Override
-    public RaftLog newRaftLog(RaftNode raftNode) {
-        return null;
-    }
+	mem;
+
+	@Override
+	public RaftLog newRaftLog(RaftNode raftNode) {
+		return new MemoryRaftLog(raftNode);
+	}
+
 }

@@ -3,34 +3,80 @@ package io.github.xinfra.lab.raft.log;
 import io.github.xinfra.lab.raft.LogEntry;
 import io.github.xinfra.lab.raft.RaftLog;
 import io.github.xinfra.lab.raft.RaftMetadata;
+import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.TermIndex;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MemoryRaftLog implements RaftLog {
 
-    List<LogEntry> logEntries = new ArrayList<>();
+	List<LogEntry> logEntries = new ArrayList<>();
 
-    @Override
-    public TermIndex getLastEntryTermIndex() {
-        // todo
-        return null;
-    }
+	// todo: why use fair use true?
+	private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
 
-    @Override
-    public void persistMetadata(RaftMetadata raftMetadata) {
-        // todo
-    }
+	private AtomicReference<RaftMetadata> raftMetadataReference = new AtomicReference<>(RaftMetadata.getDefault());
 
-    @Override
-    public void append(LogEntry logEntry) {
-        // todo
-    }
+	public MemoryRaftLog(RaftNode raftNode) {
+		// todo
+	}
 
-    @Override
-    public Long getNextIndex() {
-        // todo
-        return (long) (logEntries.size() + 1);
-    }
+	@Override
+	public void persistMetadata(RaftMetadata raftMetadata) {
+		raftMetadataReference.set(raftMetadata);
+	}
+
+	@Override
+	public RaftMetadata loadMetadata() {
+		return raftMetadataReference.get();
+	}
+
+	@Override
+	public TermIndex getLastEntryTermIndex() {
+		readWriteLock.readLock().lock();
+		try {
+			if (logEntries.size() > 0) {
+				LogEntry last = logEntries.get(logEntries.size() - 1);
+				return new TermIndex(last.term(), last.index());
+			}
+			else {
+				return null;
+			}
+		}
+		finally {
+			readWriteLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public void append(LogEntry logEntry) {
+		readWriteLock.writeLock().lock();
+		try {
+			logEntries.add(logEntry);
+		}
+		finally {
+			readWriteLock.writeLock().unlock();
+		}
+	}
+
+	@Override
+	public Long getNextIndex() {
+		TermIndex lastEntryTermIndex = getLastEntryTermIndex();
+		if (lastEntryTermIndex == null) {
+			return LEAST_VALID_LOG_INDEX;
+		}
+		else {
+			return lastEntryTermIndex.getIndex() + 1;
+		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		// do nothing
+	}
+
 }
