@@ -1,5 +1,7 @@
 package io.github.xinfra.lab.raft;
 
+import io.github.xinfra.lab.raft.log.MemoryRaftLogType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +21,7 @@ public class LocalXRaftNode extends XRaftNode {
 	private static RaftNodeConfig raftNodeConfig() {
 		RaftNodeConfig raftNodeConfig = new RaftNodeConfig();
 		raftNodeConfig.setTransportType(local);
+		raftNodeConfig.setRaftLogType(MemoryRaftLogType.memory);
 		return raftNodeConfig;
 	}
 

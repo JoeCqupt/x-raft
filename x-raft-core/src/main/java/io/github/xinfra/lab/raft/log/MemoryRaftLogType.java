@@ -6,7 +6,7 @@ import io.github.xinfra.lab.raft.RaftNode;
 
 public enum MemoryRaftLogType implements RaftLogType {
 
-	mem;
+	memory;
 
 	@Override
 	public RaftLog newRaftLog(RaftNode raftNode) {

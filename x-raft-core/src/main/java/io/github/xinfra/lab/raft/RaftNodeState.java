@@ -20,9 +20,6 @@ public class RaftNodeState {
 	private volatile AtomicReference<String> leaderId = new AtomicReference<>(null);
 
 	@Getter
-	private RaftLog raftLog;
-
-	@Getter
 	private volatile RaftRole role;
 
 	private final XRaftNode xRaftNode;
@@ -86,7 +83,7 @@ public class RaftNodeState {
 	}
 
 	public void persistMetadata() {
-		raftLog.persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
+		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
 
 }

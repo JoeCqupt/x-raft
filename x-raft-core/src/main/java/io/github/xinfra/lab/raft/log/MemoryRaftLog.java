@@ -44,7 +44,7 @@ public class MemoryRaftLog implements RaftLog {
 				return new TermIndex(last.term(), last.index());
 			}
 			else {
-				return null;
+				return new TermIndex(INVALID_LOG_TERM, INVALID_LOG_INDEX);
 			}
 		}
 		finally {
@@ -66,12 +66,8 @@ public class MemoryRaftLog implements RaftLog {
 	@Override
 	public Long getNextIndex() {
 		TermIndex lastEntryTermIndex = getLastEntryTermIndex();
-		if (lastEntryTermIndex == null) {
-			return LEAST_VALID_LOG_INDEX;
-		}
-		else {
-			return lastEntryTermIndex.getIndex() + 1;
-		}
+
+		return lastEntryTermIndex.getIndex() + 1;
 	}
 
 	@Override

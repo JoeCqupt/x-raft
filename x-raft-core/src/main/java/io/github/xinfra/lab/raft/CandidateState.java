@@ -63,7 +63,7 @@ public class CandidateState extends Thread {
 				xRaftNode.getState().persistMetadata();
 			}
 			raftConfiguration = xRaftNode.getState().getRaftConfiguration();
-			lastEntryTermIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
+			lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
 		}
 
 		VoteResult voteResult = askForVotes(preVote, electionTerm, raftConfiguration, lastEntryTermIndex);

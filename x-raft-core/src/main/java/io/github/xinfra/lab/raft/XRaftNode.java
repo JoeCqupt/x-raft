@@ -1,5 +1,6 @@
 package io.github.xinfra.lab.raft;
 
+import com.google.common.base.Verify;
 import lombok.Getter;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -12,6 +13,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private RaftNodeConfig raftNodeConfig;
 
+	private RaftLog raftLog;
+
 	@Getter
 	private RaftNodeState state;
 
@@ -23,6 +26,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		this.raftGroup = raftGroup;
 		this.raftNodeConfig = raftNodeConfig;
 		this.raftServerTransport = raftNodeConfig.getTransportType().newTransport(this);
+		this.raftLog = raftNodeConfig.getRaftLogType().newRaftLog(this);
 		this.state = new RaftNodeState(this);
 	}
 
@@ -39,6 +43,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public RaftNodeConfig getRaftNodeConfig() {
 		return raftNodeConfig;
+	}
+
+	@Override
+	public RaftLog raftLog() {
+		return raftLog;
 	}
 
 	@Override
@@ -59,8 +68,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public VoteResponse requestVote(VoteRequest voteRequest) {
-		// todo
+	public  synchronized VoteResponse requestVote(VoteRequest voteRequest) {
+		Verify.verify(isStarted(), "RaftNode is not started yet.");
+		// todo verify raft group
+
+
 		return null;
 	}
 

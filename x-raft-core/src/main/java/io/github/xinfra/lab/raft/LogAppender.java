@@ -26,7 +26,7 @@ public class LogAppender extends Thread {
 	public LogAppender(RaftPeer raftPeer, XRaftNode xRaftNode) {
 		this.raftPeer = raftPeer;
 		this.xRaftNode = xRaftNode;
-		this.nextIndex = xRaftNode.getState().getRaftLog().getNextIndex();
+		this.nextIndex = xRaftNode.raftLog().getNextIndex();
 	}
 
 	@Override
@@ -60,7 +60,7 @@ public class LogAppender extends Thread {
 	}
 
 	private boolean hasEntries() {
-		return nextIndex < xRaftNode.getState().getRaftLog().getNextIndex();
+		return nextIndex < xRaftNode.raftLog().getNextIndex();
 	}
 
 	private boolean shouldRun() {
