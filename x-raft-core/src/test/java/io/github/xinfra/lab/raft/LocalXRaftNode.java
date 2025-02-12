@@ -1,6 +1,7 @@
 package io.github.xinfra.lab.raft;
 
-import io.github.xinfra.lab.raft.log.MemoryRaftLogType;
+import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.core.log.MemoryRaftLogType;
 
 import java.util.ArrayList;
 import java.util.List;

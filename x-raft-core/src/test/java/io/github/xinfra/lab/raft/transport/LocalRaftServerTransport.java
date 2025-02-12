@@ -1,14 +1,13 @@
 package io.github.xinfra.lab.raft.transport;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.AppendEntriesRequest;
-import io.github.xinfra.lab.raft.AppendEntriesResponse;
+import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
+import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.LocalXRaftNode;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeer;
-import io.github.xinfra.lab.raft.RaftServerTransport;
-import io.github.xinfra.lab.raft.VoteRequest;
-import io.github.xinfra.lab.raft.VoteResponse;
+import io.github.xinfra.lab.raft.protocol.VoteRequest;
+import io.github.xinfra.lab.raft.protocol.VoteResponse;
 
 import java.util.List;
 import java.util.Map;

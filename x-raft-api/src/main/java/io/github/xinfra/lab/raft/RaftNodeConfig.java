@@ -1,5 +1,7 @@
 package io.github.xinfra.lab.raft;
 
+import io.github.xinfra.lab.raft.log.RaftLogType;
+import io.github.xinfra.lab.raft.transport.TransportType;
 import lombok.Data;
 
 @Data
