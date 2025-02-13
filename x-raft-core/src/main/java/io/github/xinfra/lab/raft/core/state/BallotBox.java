@@ -1,4 +1,4 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
@@ -22,7 +22,7 @@ public class RaftConfiguration {
 	private final PeerConfiguration conf;
 
 	/** The index of the corresponding log entry for this configuration. */
-	private final long logEntryIndex = -1;
+	private final Long logEntryIndex = -1L;
 
 	public RaftConfiguration(RaftPeer selfRaftPeer, PeerConfiguration oldConf, PeerConfiguration conf) {
 		this.selfRaftPeer = selfRaftPeer;

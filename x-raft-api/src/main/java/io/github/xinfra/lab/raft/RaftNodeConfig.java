@@ -11,10 +11,10 @@ public class RaftNodeConfig {
 
 	private RaftLogType raftLogType;
 
-	private long electionTimeoutMills = 150L;
+	private Long electionTimeoutMills = 150L;
 
-	private long electionTimeoutDelayMills = 150L;
+	private Long electionTimeoutDelayMills = 150L;
 
-	private long rpcTimeoutMills = 100L;
+	private Long rpcTimeoutMills = 100L;
 
 }

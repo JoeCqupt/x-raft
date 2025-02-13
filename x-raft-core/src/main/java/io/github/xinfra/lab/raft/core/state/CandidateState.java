@@ -1,7 +1,8 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
@@ -50,7 +51,7 @@ public class CandidateState extends Thread {
 	}
 
 	private boolean askForVotes(boolean preVote) throws InterruptedException {
-		long electionTerm;
+		Long electionTerm;
 		RaftConfiguration raftConfiguration;
 		TermIndex lastEntryTermIndex;
 		synchronized (xRaftNode) {
@@ -100,7 +101,7 @@ public class CandidateState extends Thread {
 		}
 	}
 
-	private VoteResult askForVotes(boolean preVote, long electionTerm, RaftConfiguration raftConfiguration,
+	private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
 			TermIndex lastEntryTermIndex) throws InterruptedException {
 		if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.self()))) {
 			return new VoteResult(electionTerm, Status.NOT_IN_CONF);
@@ -134,10 +135,10 @@ public class CandidateState extends Thread {
 		}
 
 		int waitNum = otherVotingRaftPeers.size();
-		long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
+		Long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
 
 		while (waitNum > 0 && shouldRun()) {
-			long leftTimeMills = electionEndTimeMills - System.currentTimeMillis();
+			Long leftTimeMills = electionEndTimeMills - System.currentTimeMillis();
 			if (leftTimeMills <= 0 && !ballotBox.isMajorityGranted()) {
 				return new VoteResult(electionTerm, Status.TIMEOUT);
 			}
@@ -212,7 +213,7 @@ public class CandidateState extends Thread {
 	@AllArgsConstructor
 	static class VoteResult {
 
-		private long term;
+		private Long term;
 
 		private Status status;
 

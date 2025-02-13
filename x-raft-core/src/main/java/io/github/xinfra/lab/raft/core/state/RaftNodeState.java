@@ -1,6 +1,7 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
 import lombok.Getter;
 import lombok.Setter;

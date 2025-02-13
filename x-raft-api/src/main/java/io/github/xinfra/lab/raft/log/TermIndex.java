@@ -1,17 +1,19 @@
 package io.github.xinfra.lab.raft.log;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.Comparator;
 
 @Getter
+@ToString
 public class TermIndex implements Comparable<TermIndex> {
 
-	private long term;
+	private Long term;
 
-	private long index;
+	private Long index;
 
-	public TermIndex(long term, long index) {
+	public TermIndex(Long term, Long index) {
 		this.term = term;
 		this.index = index;
 	}

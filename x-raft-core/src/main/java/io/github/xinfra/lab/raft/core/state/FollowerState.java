@@ -1,6 +1,7 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,7 @@ public class FollowerState extends Thread {
 	public void run() {
 		while (shouldRun()) {
 			try {
-				long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
+				Long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
 				TimeUnit.MILLISECONDS.sleep(electionTimeoutMills);
 				synchronized (xRaftNode) {
 					if (shouldRun() && timeout(electionTimeoutMills)) {
@@ -46,7 +47,7 @@ public class FollowerState extends Thread {
 		this.lastRpcTimeMills = lastRpcTimeMills;
 	}
 
-	private boolean timeout(long electionTimeout) {
+	private boolean timeout(Long electionTimeout) {
 		return System.currentTimeMillis() - lastRpcTimeMills >= electionTimeout;
 	}
 

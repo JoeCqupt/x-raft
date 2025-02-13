@@ -4,9 +4,9 @@ import java.io.Closeable;
 
 public interface RaftLog extends Closeable {
 
-	long INVALID_LOG_INDEX = -1;
+	Long INVALID_LOG_INDEX = -1l;
 
-	long INVALID_LOG_TERM = -1;
+	Long INVALID_LOG_TERM = -1l;
 
 	void persistMetadata(RaftMetadata raftMetadata);
 

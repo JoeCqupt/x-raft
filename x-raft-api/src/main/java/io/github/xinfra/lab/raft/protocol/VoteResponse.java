@@ -9,7 +9,7 @@ import java.io.Serializable;
 @Setter
 public class VoteResponse extends BaseInfo implements Serializable {
 
-	int term;
+	Long term;
 
 	boolean voteGranted;
 

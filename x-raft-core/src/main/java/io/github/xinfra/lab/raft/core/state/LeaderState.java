@@ -1,7 +1,8 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +86,7 @@ public class LeaderState extends Thread {
 
 		Runnable runnable;
 
-		long term;
+		Long term;
 
 		EventType eventType;
 

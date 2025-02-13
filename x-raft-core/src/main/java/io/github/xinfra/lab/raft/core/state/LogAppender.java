@@ -1,7 +1,8 @@
-package io.github.xinfra.lab.raft.core;
+package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import lombok.Data;
 
 import java.util.concurrent.locks.Lock;
@@ -16,14 +17,14 @@ public class LogAppender extends Thread {
 
 	private final XRaftNode xRaftNode;
 
-	private long nextIndex;
+	private Long nextIndex;
 
-	private long matchIndex = -1L;
+	private Long matchIndex = -1L;
 
 	// todo : await and notify
 	private final Lock awaitLock = new ReentrantLock();
 
-	private long lastAppendSendTime;
+	private Long lastAppendSendTime;
 
 	public LogAppender(RaftPeer raftPeer, XRaftNode xRaftNode) {
 		this.raftPeer = raftPeer;
@@ -49,15 +50,15 @@ public class LogAppender extends Thread {
 		return hasEntries() || heartbeatLeftTimeMills() <= 0;
 	}
 
-	private long heartbeatLeftTimeMills() {
+	private Long heartbeatLeftTimeMills() {
 		if (lastAppendSendTime == 0) {
 			// run first time
-			return 0;
+			return 0L;
 		}
 		// todo: to calculate it
 		// todo: why
-		long electionTimeoutMills = xRaftNode.getRaftNodeConfig().getElectionTimeoutMills();
-		long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
+		Long electionTimeoutMills = xRaftNode.getRaftNodeConfig().getElectionTimeoutMills();
+		Long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
 		return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
 	}
 

@@ -9,7 +9,7 @@ import java.io.Serializable;
 @Setter
 public class VoteRequest extends BaseInfo implements Serializable {
 
-	private long term;
+	private Long term;
 
 	private String candidateId;
 

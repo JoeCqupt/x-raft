@@ -7,6 +7,8 @@ import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeConfig;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.core.common.Responses;
+import io.github.xinfra.lab.raft.core.state.RaftNodeState;
 import io.github.xinfra.lab.raft.log.RaftLog;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
@@ -16,9 +18,12 @@ import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
 import io.github.xinfra.lab.raft.transport.RaftServerTransport;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private RaftPeer raftPeer;
@@ -86,13 +91,13 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		Verify.verify(isStarted(), "RaftNode is not started yet.");
 		// todo verify raft group
 
-		final boolean voteGranted = false;
-		// check candidate peer
-		RaftPeer candidate = state.getRaftConfiguration().getVotingRaftPeer(voteRequest.getCandidateId());
-		if (candidate == null) {
-			return null;
-		}
-		return null;
+		VoteContext voteContext = new VoteContext(this, voteRequest);
+
+		boolean voteGranted = voteContext.decideVote();
+		boolean shouldShutdown = false;
+
+		return Responses.voteResponse(voteRequest.getRequestPeerId(), voteRequest.getReplyPeerId(),
+				state.getCurrentTerm().get(), voteGranted, shouldShutdown);
 	}
 
 	@Override
@@ -107,9 +112,9 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return null;
 	}
 
-	public long getRandomElectionTimeoutMills() {
-		long timeoutMills = raftNodeConfig.getElectionTimeoutMills();
-		long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
+	public Long getRandomElectionTimeoutMills() {
+		Long timeoutMills = raftNodeConfig.getElectionTimeoutMills();
+		Long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
 		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
 
@@ -127,7 +132,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	 * new term discovered, change to follower
 	 * @param newTerm
 	 */
-	public synchronized void changeToFollower(long newTerm) {
+	public synchronized void changeToFollower(Long newTerm) {
 		// todo
 	}
 

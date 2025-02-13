@@ -2,8 +2,8 @@ package io.github.xinfra.lab.raft.log;
 
 public interface LogEntry {
 
-	long index();
+	Long index();
 
-	long term();
+	Long term();
 
 }

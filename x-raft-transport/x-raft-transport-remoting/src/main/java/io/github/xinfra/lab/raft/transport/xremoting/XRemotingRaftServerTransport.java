@@ -11,11 +11,11 @@ import io.github.xinfra.lab.raft.transport.RaftServerTransport;
 
 import java.util.Set;
 
-public class XRaftServerTransport extends AbstractLifeCycle implements RaftServerTransport {
+public class XRemotingRaftServerTransport extends AbstractLifeCycle implements RaftServerTransport {
 
 	private RaftNode raftNode;
 
-	public XRaftServerTransport(RaftNode raftNode) {
+	public XRemotingRaftServerTransport(RaftNode raftNode) {
 		this.raftNode = raftNode;
 	}
 
