@@ -20,7 +20,6 @@ import io.github.xinfra.lab.raft.transport.RaftServerTransport;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -92,8 +91,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		// todo verify raft group
 
 		VoteContext voteContext = new VoteContext(this, voteRequest);
-
 		boolean voteGranted = voteContext.decideVote();
+		// todo
 		boolean shouldShutdown = false;
 
 		return Responses.voteResponse(voteRequest.getRequestPeerId(), voteRequest.getReplyPeerId(),
@@ -102,6 +101,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	@Override
 	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
+
 		// todo
 		return null;
 	}

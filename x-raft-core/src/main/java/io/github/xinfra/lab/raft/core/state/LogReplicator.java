@@ -3,13 +3,14 @@ package io.github.xinfra.lab.raft.core.state;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import lombok.Data;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
-public class LogAppender extends Thread {
+public class LogReplicator extends Thread {
 
 	private volatile boolean running = true;
 
@@ -26,7 +27,7 @@ public class LogAppender extends Thread {
 
 	private Long lastAppendSendTime;
 
-	public LogAppender(RaftPeer raftPeer, XRaftNode xRaftNode) {
+	public LogReplicator(RaftPeer raftPeer, XRaftNode xRaftNode) {
 		this.raftPeer = raftPeer;
 		this.xRaftNode = xRaftNode;
 		this.nextIndex = xRaftNode.raftLog().getNextIndex();
@@ -43,6 +44,9 @@ public class LogAppender extends Thread {
 
 	private void sendAppendEntries() {
 		// todo
+
+		AppendEntriesRequest request = new AppendEntriesRequest();
+		request.setLeaderId(xRaftNode.getState().getLeaderId().get());
 
 	}
 

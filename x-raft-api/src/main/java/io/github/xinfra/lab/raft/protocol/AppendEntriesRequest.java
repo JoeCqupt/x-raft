@@ -13,7 +13,7 @@ public class AppendEntriesRequest extends BaseInfo implements Serializable {
 
 	private Long term;
 
-	private Long leaderId;
+	private String leaderId;
 
 	private Long prevLogIndex;
 

@@ -21,7 +21,7 @@ public class LeaderState extends Thread {
 
 	private final XRaftNode xRaftNode;
 
-	private List<LogAppender> logAppenders = new ArrayList<>();
+	private List<LogReplicator> logReplicators = new ArrayList<>();
 
 	private BlockingQueue<StateEvent> eventQueue = new ArrayBlockingQueue<>(4096);
 
@@ -69,11 +69,11 @@ public class LeaderState extends Thread {
 		// init log appenders
 		Set<RaftPeer> otherRaftPeers = xRaftNode.getState().getRaftConfiguration().getOtherRaftPeers();
 		for (RaftPeer raftPeer : otherRaftPeers) {
-			logAppenders.add(new LogAppender(raftPeer, xRaftNode));
+			logReplicators.add(new LogReplicator(raftPeer, xRaftNode));
 		}
 		// start log appenders
-		for (LogAppender logAppender : logAppenders) {
-			logAppender.start();
+		for (LogReplicator logReplicator : logReplicators) {
+			logReplicator.start();
 		}
 	}
 
