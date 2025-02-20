@@ -25,7 +25,7 @@ public class VoteContext {
 		// check candidate peer
 		RaftPeer candidate = raftNode.getState().getRaftConfiguration().getVotingRaftPeer(candidateId);
 		if (candidate == null) {
-			log.info("candidateId:{} not found.", candidateId);
+			log.info("reject candidateId:{} not found.", candidateId);
 			return false;
 		}
 
@@ -55,6 +55,9 @@ public class VoteContext {
 			}
 		}
 		// check leadership
+		if(preVote){
+			// todo check leadership
+		}
 		// todo
 
 		// Check last log entry
