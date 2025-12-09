@@ -29,7 +29,7 @@ public class RaftNodeState {
 
 	private final RaftConfigurationState raftConfigurationState;
 
-	private final AtomicReference<FollowerState> followerState = new AtomicReference<>();
+	private  FollowerState followerState;
 
 	private final AtomicReference<CandidateState> candidateState = new AtomicReference<>();
 
@@ -40,27 +40,51 @@ public class RaftNodeState {
 		RaftConfiguration initialConfiguration = new RaftConfiguration(xRaftNode.self(), null,
 				new PeerConfiguration(xRaftNode.getRaftGroup().getPeers()));
 		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
+		this.followerState = new FollowerState(xRaftNode);
 	}
 
-	public void startFollowerState() {
-		role = RaftRole.FOLLOWER;
-		followerState.updateAndGet(current -> current == null ? new FollowerState(xRaftNode) : current).start();
-	}
-
-	public void shutdownFollowerState() {
-		FollowerState follower = followerState.getAndSet(null);
-		if (follower != null) {
-			follower.shutdown();
-			follower.interrupt();
+	public synchronized void changeToFollower() {
+		if (role == RaftRole.CANDIDATE) {
+			shutdownCandidateState();
 		}
+		if (role == RaftRole.LEADER) {
+			shutdownLeaderState();
+		}
+		if (role == RaftRole.LEARNER) {
+			// todo
+		}
+		role = RaftRole.FOLLOWER;
+		followerState.startup();
 	}
 
-	public void startCandidateState() {
+	/**
+	 * new term discovered, change to follower
+	 * @param newTerm
+	 */
+	public synchronized void changeToFollower(Long newTerm) {
+		// todo
+	}
+
+	public synchronized void changeToCandidate() {
+		followerState.shutdown();
+		startCandidateState();
+	}
+
+	public synchronized void changeToLeader() {
+		shutdownCandidateState();
+		startLeaderState();
+	}
+
+	private void shutdownFollowerState() {
+
+	}
+
+	private void startCandidateState() {
 		role = RaftRole.CANDIDATE;
 		candidateState.updateAndGet(current -> current == null ? new CandidateState(xRaftNode) : current).start();
 	}
 
-	public void shutdownCandidateState() {
+	private void shutdownCandidateState() {
 		CandidateState candidate = candidateState.getAndSet(null);
 		if (candidate != null) {
 			candidate.shutdown();
@@ -68,12 +92,12 @@ public class RaftNodeState {
 		}
 	}
 
-	public void startLeaderState() {
+	private void startLeaderState() {
 		role = RaftRole.LEADER;
 		leaderState.updateAndGet(current -> current == null ? new LeaderState(xRaftNode) : current).start();
 	}
 
-	public void shutdownLeaderState() {
+	private void shutdownLeaderState() {
 		LeaderState leader = leaderState.getAndSet(null);
 		if (leader != null) {
 			leader.shutdown();

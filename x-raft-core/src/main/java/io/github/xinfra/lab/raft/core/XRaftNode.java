@@ -117,33 +117,4 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		Long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
 		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
-
-	public synchronized void changeToFollower() {
-		if (state.getRole() == RaftRole.CANDIDATE) {
-			state.shutdownCandidateState();
-		}
-		if (state.getRole() == RaftRole.LEADER) {
-			state.shutdownLeaderState();
-		}
-		state.startFollowerState();
-	}
-
-	/**
-	 * new term discovered, change to follower
-	 * @param newTerm
-	 */
-	public synchronized void changeToFollower(Long newTerm) {
-		// todo
-	}
-
-	public synchronized void changeToCandidate() {
-		state.shutdownFollowerState();
-		state.startCandidateState();
-	}
-
-	public synchronized void changeToLeader() {
-		state.shutdownCandidateState();
-		state.startLeaderState();
-	}
-
 }
