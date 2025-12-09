@@ -25,12 +25,19 @@ public class FollowerState {
 		this.lastRpcTimeMills = lastRpcTimeMills;
 	}
 
-	public void startup() {
+	public synchronized void startup() {
+		if (running){
+			return;
+		}
+		running = true;
 		electionTimeoutTask = new ElectionTimeoutTask();
 		electionTimeoutTask.start();
 	}
 
-	public void shutdown() {
+	public synchronized void shutdown() {
+		if (!running){
+			return;
+		}
 		running = false;
 		if (electionTimeoutTask != null) {
 			electionTimeoutTask.interrupt();

@@ -31,7 +31,7 @@ public class RaftNodeState {
 
 	private  FollowerState followerState;
 
-	private final AtomicReference<CandidateState> candidateState = new AtomicReference<>();
+	private  CandidateState candidateState ;
 
 	private final AtomicReference<LeaderState> leaderState = new AtomicReference<>();
 
@@ -41,11 +41,13 @@ public class RaftNodeState {
 				new PeerConfiguration(xRaftNode.getRaftGroup().getPeers()));
 		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
 		this.followerState = new FollowerState(xRaftNode);
+		this.candidateState =new CandidateState(xRaftNode);
 	}
 
 	public synchronized void changeToFollower() {
+		role = RaftRole.FOLLOWER;
 		if (role == RaftRole.CANDIDATE) {
-			shutdownCandidateState();
+			candidateState.shutdown();
 		}
 		if (role == RaftRole.LEADER) {
 			shutdownLeaderState();
@@ -53,7 +55,6 @@ public class RaftNodeState {
 		if (role == RaftRole.LEARNER) {
 			// todo
 		}
-		role = RaftRole.FOLLOWER;
 		followerState.startup();
 	}
 
@@ -66,31 +67,17 @@ public class RaftNodeState {
 	}
 
 	public synchronized void changeToCandidate() {
+		role = RaftRole.CANDIDATE;
 		followerState.shutdown();
-		startCandidateState();
+		candidateState.startup();
 	}
 
 	public synchronized void changeToLeader() {
-		shutdownCandidateState();
+		candidateState.shutdown();
 		startLeaderState();
 	}
 
-	private void shutdownFollowerState() {
 
-	}
-
-	private void startCandidateState() {
-		role = RaftRole.CANDIDATE;
-		candidateState.updateAndGet(current -> current == null ? new CandidateState(xRaftNode) : current).start();
-	}
-
-	private void shutdownCandidateState() {
-		CandidateState candidate = candidateState.getAndSet(null);
-		if (candidate != null) {
-			candidate.shutdown();
-			candidate.interrupt();
-		}
-	}
 
 	private void startLeaderState() {
 		role = RaftRole.LEADER;
@@ -112,5 +99,4 @@ public class RaftNodeState {
 	public void persistMetadata() {
 		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
-
 }

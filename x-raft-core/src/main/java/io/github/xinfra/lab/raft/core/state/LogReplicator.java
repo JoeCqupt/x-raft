@@ -76,6 +76,7 @@ public class LogReplicator extends Thread {
 
 	public void shutdown() {
 		running = false;
+		this.interrupt();
 	}
 
 }

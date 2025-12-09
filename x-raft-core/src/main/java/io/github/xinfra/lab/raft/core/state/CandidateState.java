@@ -21,202 +21,221 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CandidateState extends Thread {
 
-	private volatile boolean running = true;
+    private volatile boolean running = true;
 
-	private final XRaftNode xRaftNode;
+    private final XRaftNode xRaftNode;
 
-	public CandidateState(XRaftNode xRaftNode) {
-		this.xRaftNode = xRaftNode;
-	}
+    private Thread electionTask;
 
-	@Override
-	public void run() {
-		while (shouldRun()) {
-			try {
-				if (askForVotes(true)) {
-					if (askForVotes(false)) {
-						synchronized (xRaftNode) {
-							if (shouldRun()) {
-								xRaftNode.changeToLeader();
-								break;
-							}
-						}
-					}
-				}
-			}
-			catch (Throwable t) {
-				log.error("CandidateState error", t);
-			}
-		}
-	}
+    public CandidateState(XRaftNode xRaftNode) {
+        this.xRaftNode = xRaftNode;
+    }
 
-	private boolean askForVotes(boolean preVote) throws InterruptedException {
-		Long electionTerm;
-		RaftConfiguration raftConfiguration;
-		TermIndex lastEntryTermIndex;
-		synchronized (xRaftNode) {
-			if (!shouldRun()) {
-				return false;
-			}
-			// todo: notify state machine
-			xRaftNode.getState().getLeaderId().getAndSet(null);
-			if (preVote) {
-				electionTerm = xRaftNode.getState().getCurrentTerm().get();
-			}
-			else {
-				electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
-				xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.self().getRaftPeerId());
-				xRaftNode.getState().persistMetadata();
-			}
-			raftConfiguration = xRaftNode.getState().getRaftConfiguration();
-			lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
-		}
+    public synchronized void startup() {
+        if (running){
+            return;
+        }
+        running = true;
+        electionTask = new ElectionTask();
+        electionTask.start();
+    }
 
-		VoteResult voteResult = askForVotes(preVote, electionTerm, raftConfiguration, lastEntryTermIndex);
+    public synchronized void shutdown() {
+        if (!running){
+            return;
+        }
+        running = false;
+            electionTask.interrupt();
+    }
 
-		synchronized (xRaftNode) {
-			if (!shouldRun()) {
-				return false;
-			}
-		}
 
-		switch (voteResult.getStatus()) {
-			case PASSED:
-				return true;
-			case SHUTDOWN:
-			case NOT_IN_CONF:
-				// todo notify state machine
-				xRaftNode.shutdown();
-				return false;
-			case TIMEOUT:
-				return false; // retry
-			case NEW_TERM:
-				xRaftNode.changeToFollower(voteResult.getTerm());
-				return false;
-			case REJECTED:
-				xRaftNode.changeToFollower();
-				return false;
-			default:
-				throw new IllegalArgumentException("Unable to handle vote result " + voteResult);
-		}
-	}
+    class ElectionTask extends Thread {
+        public ElectionTask() {
+            super("ElectionTask");
+        }
 
-	private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
-			TermIndex lastEntryTermIndex) throws InterruptedException {
-		if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.self()))) {
-			return new VoteResult(electionTerm, Status.NOT_IN_CONF);
-		}
+        @Override
+        public void run() {
+            while (shouldRun()) {
+                try {
+                    if (askForVotes(true)) {
+                        if (askForVotes(false)) {
+                            synchronized (xRaftNode) {
+                                if (shouldRun()) {
+                                    xRaftNode.getState().changeToLeader();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("CandidateState error", t);
+                }
+            }
+        }
 
-		Set<RaftPeer> otherVotingRaftPeers = raftConfiguration.getOtherVotingRaftPeers();
-		if (otherVotingRaftPeers.isEmpty()) {
-			return new VoteResult(electionTerm, Status.PASSED);
-		}
+        private boolean askForVotes(boolean preVote) throws InterruptedException {
+            Long electionTerm;
+            RaftConfiguration raftConfiguration;
+            TermIndex lastEntryTermIndex;
+            synchronized (xRaftNode) {
+                if (!shouldRun()) {
+                    return false;
+                }
+                // todo: notify state machine
+                xRaftNode.getState().getLeaderId().getAndSet(null);
+                if (preVote) {
+                    electionTerm = xRaftNode.getState().getCurrentTerm().get();
+                } else {
+                    electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
+                    xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.self().getRaftPeerId());
+                    xRaftNode.getState().persistMetadata();
+                }
+                raftConfiguration = xRaftNode.getState().getRaftConfiguration();
+                lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
+            }
 
-		// init ballot box
-		BallotBox ballotBox = new BallotBox(raftConfiguration);
-		// vote to self
-		ballotBox.grantVote(xRaftNode.self().getRaftPeerId());
+            VoteResult voteResult = askForVotes(preVote, electionTerm, raftConfiguration, lastEntryTermIndex);
 
-		// todo: close it
-		ExecutorCompletionService<VoteResponse> voteExecutor = new ExecutorCompletionService<>(
-				Executors.newFixedThreadPool(otherVotingRaftPeers.size()));
-		for (RaftPeer raftPeer : otherVotingRaftPeers) {
-			// build request
-			VoteRequest voteRequest = new VoteRequest();
-			voteRequest.setPreVote(preVote);
-			voteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
-			voteRequest.setTerm(electionTerm);
-			voteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
-			voteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
-			voteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
-			voteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
+            synchronized (xRaftNode) {
+                if (!shouldRun()) {
+                    return false;
+                }
+            }
 
-			voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));
-		}
+            switch (voteResult.getStatus()) {
+                case PASSED:
+                    return true;
+                case SHUTDOWN:
+                case NOT_IN_CONF:
+                    // todo notify state machine
+                    xRaftNode.shutdown();
+                    return false;
+                case TIMEOUT:
+                    return false; // retry
+                case NEW_TERM:
+                    xRaftNode.getState().changeToFollower(voteResult.getTerm());
+                    return false;
+                case REJECTED:
+                    xRaftNode.getState().changeToFollower();
+                    return false;
+                default:
+                    throw new IllegalArgumentException("Unable to handle vote result " + voteResult);
+            }
+        }
 
-		int waitNum = otherVotingRaftPeers.size();
-		Long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
+        private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
+                                       TermIndex lastEntryTermIndex) throws InterruptedException {
+            if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.self()))) {
+                return new VoteResult(electionTerm, Status.NOT_IN_CONF);
+            }
 
-		while (waitNum > 0 && shouldRun()) {
-			Long leftTimeMills = electionEndTimeMills - System.currentTimeMillis();
-			if (leftTimeMills <= 0 && !ballotBox.isMajorityGranted()) {
-				return new VoteResult(electionTerm, Status.TIMEOUT);
-			}
-			else if (leftTimeMills <= 0 && ballotBox.isMajorityGranted()) {
-				return new VoteResult(electionTerm, Status.PASSED);
-			}
+            Set<RaftPeer> otherVotingRaftPeers = raftConfiguration.getOtherVotingRaftPeers();
+            if (otherVotingRaftPeers.isEmpty()) {
+                return new VoteResult(electionTerm, Status.PASSED);
+            }
 
-			Future<VoteResponse> responseFuture = voteExecutor.poll(leftTimeMills, TimeUnit.MILLISECONDS);
-			if (responseFuture == null) {
-				// timeout
-				continue;
-			}
+            // init ballot box
+            BallotBox ballotBox = new BallotBox(raftConfiguration);
+            // vote to self
+            ballotBox.grantVote(xRaftNode.self().getRaftPeerId());
 
-			VoteResponse voteResponse = null;
-			try {
-				voteResponse = responseFuture.get();
+            // todo: close it
+            ExecutorCompletionService<VoteResponse> voteExecutor = new ExecutorCompletionService<>(
+                    Executors.newFixedThreadPool(otherVotingRaftPeers.size()));
+            for (RaftPeer raftPeer : otherVotingRaftPeers) {
+                // build request
+                VoteRequest voteRequest = new VoteRequest();
+                voteRequest.setPreVote(preVote);
+                voteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
+                voteRequest.setTerm(electionTerm);
+                voteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
+                voteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
+                voteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
+                voteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
 
-				if (voteResponse.isShouldShutdown()) {
-					return new VoteResult(electionTerm, Status.SHUTDOWN);
-				}
+                voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));
+            }
 
-				if (voteResponse.getTerm() > electionTerm) {
-					return new VoteResult(voteResponse.getTerm(), Status.NEW_TERM);
-				}
+            int waitNum = otherVotingRaftPeers.size();
+            Long electionEndTimeMills = System.currentTimeMillis() + xRaftNode.getRandomElectionTimeoutMills();
 
-				if (voteResponse.isVoteGranted()) {
-					ballotBox.grantVote(voteResponse.getReplyPeerId());
-					if (ballotBox.isMajorityGranted()) {
-						return new VoteResult(electionTerm, Status.PASSED);
-					}
-				}
-				else {
-					ballotBox.rejectVote(voteResponse.getReplyPeerId());
-					if (ballotBox.isMajorityRejected()) {
-						return new VoteResult(electionTerm, Status.REJECTED);
-					}
-				}
+            while (waitNum > 0 && shouldRun()) {
+                Long leftTimeMills = electionEndTimeMills - System.currentTimeMillis();
+                if (leftTimeMills <= 0 && !ballotBox.isMajorityGranted()) {
+                    return new VoteResult(electionTerm, Status.TIMEOUT);
+                } else if (leftTimeMills <= 0 && ballotBox.isMajorityGranted()) {
+                    return new VoteResult(electionTerm, Status.PASSED);
+                }
 
-			}
-			catch (ExecutionException e) {
-				log.error("get vote response error", e);
-			}
+                Future<VoteResponse> responseFuture = voteExecutor.poll(leftTimeMills, TimeUnit.MILLISECONDS);
+                if (responseFuture == null) {
+                    // timeout
+                    continue;
+                }
 
-			waitNum--;
-		}
+                VoteResponse voteResponse = null;
+                try {
+                    voteResponse = responseFuture.get();
 
-		// received all vote response
-		if (ballotBox.isMajorityGranted()) {
-			return new VoteResult(electionTerm, Status.PASSED);
-		}
-		else {
-			return new VoteResult(electionTerm, Status.REJECTED);
-		}
-	}
+                    if (voteResponse.isShouldShutdown()) {
+                        return new VoteResult(electionTerm, Status.SHUTDOWN);
+                    }
 
-	private boolean shouldRun() {
-		return running && xRaftNode.getState().getRole() == RaftRole.CANDIDATE;
-	}
+                    if (voteResponse.getTerm() > electionTerm) {
+                        return new VoteResult(voteResponse.getTerm(), Status.NEW_TERM);
+                    }
 
-	public void shutdown() {
-		running = false;
-	}
+                    if (voteResponse.isVoteGranted()) {
+                        ballotBox.grantVote(voteResponse.getReplyPeerId());
+                        if (ballotBox.isMajorityGranted()) {
+                            return new VoteResult(electionTerm, Status.PASSED);
+                        }
+                    } else {
+                        ballotBox.rejectVote(voteResponse.getReplyPeerId());
+                        if (ballotBox.isMajorityRejected()) {
+                            return new VoteResult(electionTerm, Status.REJECTED);
+                        }
+                    }
 
-	enum Status {
+                } catch (ExecutionException e) {
+                    log.error("get vote response error", e);
+                }
 
-		PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN, NOT_IN_CONF
+                waitNum--;
+            }
 
-	}
+            // received all vote response
+            if (ballotBox.isMajorityGranted()) {
+                return new VoteResult(electionTerm, Status.PASSED);
+            } else {
+                return new VoteResult(electionTerm, Status.REJECTED);
+            }
+        }
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	static class VoteResult {
+        private boolean shouldRun() {
+            return running && xRaftNode.getState().getRole() == RaftRole.CANDIDATE;
+        }
 
-		private Long term;
 
-		private Status status;
 
-	}
 
+    }
+
+    enum Status {
+
+        PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN, NOT_IN_CONF
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    static class VoteResult {
+
+        private Long term;
+
+        private Status status;
+
+    }
 }
