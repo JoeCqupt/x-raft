@@ -39,7 +39,7 @@ public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftS
 	public void startup() {
 		super.startup();
 		this.raftPeerNodes = localXRaftNode.raftPeerNodes();
-		this.raftPeerNodeMap = raftPeerNodes.stream().collect(Collectors.toMap(RaftNode::self, Function.identity()));
+		this.raftPeerNodeMap = raftPeerNodes.stream().collect(Collectors.toMap(RaftNode::raftPeer, Function.identity()));
 	}
 
 	@Override

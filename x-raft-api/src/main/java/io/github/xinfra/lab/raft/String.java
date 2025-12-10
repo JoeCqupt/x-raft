@@ -6,13 +6,13 @@ import org.apache.commons.lang3.Validate;
 import java.util.List;
 
 @Data
-public class RaftGroup {
+public class String {
 
-    private String raftGroupId;
+    private java.lang.String raftGroupId;
 
     private List<RaftPeer> peers;
 
-    public RaftGroup(String raftGroupId, List<RaftPeer> peers) {
+    public String(java.lang.String raftGroupId, List<RaftPeer> peers) {
         Validate.notBlank(raftGroupId, "raftGroupId can not be blank");
         Validate.notEmpty(peers, "peers can not be empty");
         // 判断peerId 是否有重复

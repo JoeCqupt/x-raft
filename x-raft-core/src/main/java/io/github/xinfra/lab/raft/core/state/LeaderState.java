@@ -36,8 +36,8 @@ public class LeaderState extends Thread {
 		if (running) {
 			return;
 		}
-		// set leader id to self id
-		xRaftNode.getState().getLeaderId().set(xRaftNode.self().getRaftPeerId());
+		// set leader id to raftPeer id
+		xRaftNode.getState().getLeaderId().set(xRaftNode.raftPeer().getRaftPeerId());
 		// append an entry to log when leader startup
 		// todo: append a no-op entry or configuration entry
 		xRaftNode.raftLog().append(null);
@@ -64,6 +64,7 @@ public class LeaderState extends Thread {
 		for (LogReplicator logReplicator : logReplicators) {
 			logReplicator.shutdown();
 		}
+		logReplicators.clear();
 		stateEventExecutor.interrupt();
 	}
 

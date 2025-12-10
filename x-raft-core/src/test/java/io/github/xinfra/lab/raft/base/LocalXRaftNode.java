@@ -1,8 +1,8 @@
 package io.github.xinfra.lab.raft.base;
 
-import io.github.xinfra.lab.raft.RaftGroup;
+import io.github.xinfra.lab.raft.String;
 import io.github.xinfra.lab.raft.RaftNode;
-import io.github.xinfra.lab.raft.RaftNodeConfig;
+import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.core.log.MemoryRaftLogType;
@@ -19,15 +19,15 @@ public class LocalXRaftNode extends XRaftNode {
 
 	private List<RaftNode> raftPeerNodes = new ArrayList<>();
 
-	public LocalXRaftNode(RaftPeer raftPeer, RaftGroup raftGroup) {
+	public LocalXRaftNode(RaftPeer raftPeer, String raftGroup) {
 		super(raftPeer, raftGroup, raftNodeConfig());
 	}
 
-	private static RaftNodeConfig raftNodeConfig() {
-		RaftNodeConfig raftNodeConfig = new RaftNodeConfig();
-		raftNodeConfig.setTransportType(local);
-		raftNodeConfig.setRaftLogType(MemoryRaftLogType.memory);
-		return raftNodeConfig;
+	private static RaftNodeOptions raftNodeConfig() {
+		RaftNodeOptions raftNodeOptions = new RaftNodeOptions();
+		raftNodeOptions.setTransportType(local);
+		raftNodeOptions.setRaftLogType(MemoryRaftLogType.memory);
+		return raftNodeOptions;
 	}
 
 	/**

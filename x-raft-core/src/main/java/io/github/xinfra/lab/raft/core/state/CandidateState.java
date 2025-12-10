@@ -90,7 +90,7 @@ public class CandidateState extends Thread {
 				}
 				else {
 					electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
-					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.self().getRaftPeerId());
+					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeer().getRaftPeerId());
 					xRaftNode.getState().persistMetadata();
 				}
 				raftConfiguration = xRaftNode.getState().getRaftConfiguration();
@@ -128,7 +128,7 @@ public class CandidateState extends Thread {
 
 		private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
 				TermIndex lastEntryTermIndex) throws InterruptedException {
-			if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.self()))) {
+			if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.raftPeer()))) {
 				return new VoteResult(electionTerm, Status.NOT_IN_CONF);
 			}
 
@@ -139,8 +139,8 @@ public class CandidateState extends Thread {
 
 			// init ballot box
 			BallotBox ballotBox = new BallotBox(raftConfiguration);
-			// vote to self
-			ballotBox.grantVote(xRaftNode.self().getRaftPeerId());
+			// vote to raftPeer
+			ballotBox.grantVote(xRaftNode.raftPeer().getRaftPeerId());
 
 			// todo: close it
 			ExecutorCompletionService<VoteResponse> voteExecutor = new ExecutorCompletionService<>(
@@ -149,11 +149,11 @@ public class CandidateState extends Thread {
 				// build request
 				VoteRequest voteRequest = new VoteRequest();
 				voteRequest.setPreVote(preVote);
-				voteRequest.setCandidateId(xRaftNode.self().getRaftPeerId());
+				voteRequest.setCandidateId(xRaftNode.raftPeer().getRaftPeerId());
 				voteRequest.setTerm(electionTerm);
 				voteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
 				voteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
-				voteRequest.setRequestPeerId(xRaftNode.self().getRaftPeerId());
+				voteRequest.setRequestPeerId(xRaftNode.raftPeer().getRaftPeerId());
 				voteRequest.setReplyPeerId(raftPeer.getRaftPeerId());
 
 				voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));

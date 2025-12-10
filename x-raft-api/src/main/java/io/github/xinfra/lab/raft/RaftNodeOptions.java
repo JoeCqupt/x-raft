@@ -5,7 +5,7 @@ import io.github.xinfra.lab.raft.transport.TransportType;
 import lombok.Data;
 
 @Data
-public class RaftNodeConfig {
+public class RaftNodeOptions {
 
 	private TransportType transportType;
 

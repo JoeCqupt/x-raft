@@ -44,7 +44,7 @@ public class RaftConfiguration {
 	}
 
 	/**
-	 * all voting raft peers exclude self
+	 * all voting raft peers exclude raftPeer
 	 * @return
 	 */
 	public Set<RaftPeer> getOtherVotingRaftPeers() {
@@ -67,7 +67,7 @@ public class RaftConfiguration {
 	}
 
 	/**
-	 * all raft peers exclude self
+	 * all raft peers exclude raftPeer
 	 * @return
 	 */
 	public Set<RaftPeer> getOtherRaftPeers() {
@@ -90,7 +90,7 @@ public class RaftConfiguration {
 
 	private RaftPeer getVotingRaftPeer(PeerConfiguration conf, String candidateId) {
 		RaftPeer raftPeer = conf.getRaftPeerMap().get(candidateId);
-		if (raftPeer != null && raftPeer.getRole() != RaftRole.LEARNER) {
+		if (raftPeer != null && raftPeer.getInitRole() != RaftRole.LEARNER) {
 			return raftPeer;
 		}
 		return null;

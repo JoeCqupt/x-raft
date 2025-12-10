@@ -2,11 +2,10 @@ package io.github.xinfra.lab.raft.core;
 
 import com.google.common.base.Verify;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.RaftGroup;
+import io.github.xinfra.lab.raft.String;
 import io.github.xinfra.lab.raft.RaftNode;
-import io.github.xinfra.lab.raft.RaftNodeConfig;
+import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
-import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.common.Responses;
 import io.github.xinfra.lab.raft.core.state.RaftNodeState;
 import io.github.xinfra.lab.raft.log.RaftLog;
@@ -27,9 +26,10 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private RaftPeer raftPeer;
 
-	private RaftGroup raftGroup;
+	private String raftGroup;
 
-	private RaftNodeConfig raftNodeConfig;
+	@Getter
+	private RaftNodeOptions raftNodeOptions;
 
 	private RaftLog raftLog;
 
@@ -39,28 +39,23 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private RaftServerTransport raftServerTransport;
 
-	public XRaftNode(RaftPeer raftPeer, RaftGroup raftGroup, RaftNodeConfig raftNodeConfig) {
+	public XRaftNode(RaftPeer raftPeer, String raftGroup, RaftNodeOptions raftNodeOptions) {
 		this.raftPeer = raftPeer;
 		this.raftGroup = raftGroup;
-		this.raftNodeConfig = raftNodeConfig;
-		this.raftServerTransport = raftNodeConfig.getTransportType().newTransport(this);
-		this.raftLog = raftNodeConfig.getRaftLogType().newRaftLog(this);
+		this.raftNodeOptions = raftNodeOptions;
+		this.raftServerTransport = raftNodeOptions.getTransportType().newTransport(this);
+		this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
 		this.state = new RaftNodeState(this);
 	}
 
 	@Override
-	public RaftPeer self() {
+	public RaftPeer raftPeer() {
 		return raftPeer;
 	}
 
 	@Override
-	public RaftGroup getRaftGroup() {
+	public String getRaftGroupId() {
 		return raftGroup;
-	}
-
-	@Override
-	public RaftNodeConfig getRaftNodeConfig() {
-		return raftNodeConfig;
 	}
 
 	@Override
@@ -113,8 +108,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	public Long getRandomElectionTimeoutMills() {
-		Long timeoutMills = raftNodeConfig.getElectionTimeoutMills();
-		Long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
+		Long timeoutMills = raftNodeOptions.getElectionTimeoutMills();
+		Long delayMills = raftNodeOptions.getElectionTimeoutDelayMills();
 		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
 

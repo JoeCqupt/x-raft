@@ -3,7 +3,6 @@ package io.github.xinfra.lab.raft;
 import lombok.Data;
 
 import java.net.InetSocketAddress;
-import java.util.Objects;
 
 @Data
 public class RaftPeer {
@@ -12,5 +11,7 @@ public class RaftPeer {
 
 	private InetSocketAddress address;
 
-	private RaftRole role = RaftRole.FOLLOWER;
+	private RaftRole initRole = RaftRole.FOLLOWER;
+
+	private int priority = 1; //todo: default priority
 }

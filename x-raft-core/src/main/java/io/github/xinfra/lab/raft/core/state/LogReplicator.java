@@ -61,7 +61,7 @@ public class LogReplicator extends Thread {
 		}
 		// todo: to calculate it
 		// todo: why
-		Long electionTimeoutMills = xRaftNode.getRaftNodeConfig().getElectionTimeoutMills();
+		Long electionTimeoutMills = xRaftNode.getRaftNodeOptions().getElectionTimeoutMills();
 		Long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
 		return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
 	}

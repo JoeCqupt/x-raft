@@ -37,8 +37,8 @@ public class RaftNodeState {
 
 	public RaftNodeState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
-		RaftConfiguration initialConfiguration = new RaftConfiguration(xRaftNode.self(), null,
-				new PeerConfiguration(xRaftNode.getRaftGroup().getPeers()));
+		RaftConfiguration initialConfiguration = new RaftConfiguration(xRaftNode.raftPeer(), null,
+				new PeerConfiguration(xRaftNode.getRaftGroupId().getPeers()));
 		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
 		this.followerState = new FollowerState(xRaftNode);
 		this.candidateState = new CandidateState(xRaftNode);
