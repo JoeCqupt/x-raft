@@ -13,7 +13,7 @@ public class FollowerState {
 
 	private volatile Long lastRpcTimeMills = System.currentTimeMillis();
 
-	private volatile boolean running = true;
+	private volatile boolean running;
 
 	private Thread electionTimeoutTask;
 

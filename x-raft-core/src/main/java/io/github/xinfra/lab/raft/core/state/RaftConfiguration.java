@@ -80,9 +80,13 @@ public class RaftConfiguration {
 	 * @param candidateId
 	 * @return maybe null
 	 */
-	public RaftPeer getVotingRaftPeer(String candidateId) {
-		return getVotingRaftPeer(conf, candidateId) == null ? getVotingRaftPeer(oldConf, candidateId) : null;
-	}
+    public RaftPeer getVotingRaftPeer(String candidateId) {
+        RaftPeer raftPeer = getVotingRaftPeer(conf, candidateId);
+        if (raftPeer != null) {
+            return raftPeer;
+        }
+        return getVotingRaftPeer(oldConf, candidateId);
+    }
 
 	private RaftPeer getVotingRaftPeer(PeerConfiguration conf, String candidateId) {
 		RaftPeer raftPeer = conf.getRaftPeerMap().get(candidateId);

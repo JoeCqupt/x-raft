@@ -17,7 +17,7 @@ public class LeaderState extends Thread {
 
 	private static final Logger log = LoggerFactory.getLogger(LeaderState.class);
 
-	private volatile boolean running = true;
+	private volatile boolean running ;
 
 	private final XRaftNode xRaftNode;
 

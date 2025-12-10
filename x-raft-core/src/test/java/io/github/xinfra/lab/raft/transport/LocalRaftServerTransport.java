@@ -3,7 +3,7 @@ package io.github.xinfra.lab.raft.transport;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
-import io.github.xinfra.lab.raft.LocalXRaftNode;
+import io.github.xinfra.lab.raft.base.LocalXRaftNode;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;

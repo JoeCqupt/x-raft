@@ -1,6 +1,7 @@
 package io.github.xinfra.lab.raft;
 
 import com.google.common.collect.Sets;
+import io.github.xinfra.lab.raft.base.LocalXRaftNode;
 import io.github.xinfra.lab.raft.common.Wait;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -28,20 +29,17 @@ public class BaseUnitTest {
 		raftPeer3.setRaftPeerId("node3");
 		raftPeer3.setAddress(new InetSocketAddress("localhost", 6667));
 
-		RaftGroup raftGroup = new RaftGroup("1", Sets.newHashSet(raftPeer1, raftPeer2, raftPeer3));
+		RaftGroup raftGroup = new RaftGroup("raft-group", Sets.newHashSet(raftPeer1, raftPeer2, raftPeer3));
 
 		node1 = new LocalXRaftNode(raftPeer1, raftGroup);
 		node2 = new LocalXRaftNode(raftPeer2, raftGroup);
 		node3 = new LocalXRaftNode(raftPeer3, raftGroup);
 
-		node1.addRaftPeerNode(node2);
-		node1.addRaftPeerNode(node3);
+		node1.addRaftPeerNode(node2, node3);
 
-		node2.addRaftPeerNode(node1);
-		node2.addRaftPeerNode(node3);
+		node2.addRaftPeerNode(node1, node3);
 
-		node3.addRaftPeerNode(node1);
-		node3.addRaftPeerNode(node2);
+		node3.addRaftPeerNode(node1, node2);
 
 		node1.startup();
 		node2.startup();
@@ -66,6 +64,8 @@ public class BaseUnitTest {
 			}
 			return false;
 		}, 30, 100);
+
+
 	}
 
 }

@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CandidateState extends Thread {
 
-	private volatile boolean running = true;
+	private volatile boolean running ;
 
 	private final XRaftNode xRaftNode;
 

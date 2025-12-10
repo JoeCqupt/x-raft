@@ -1,5 +1,9 @@
-package io.github.xinfra.lab.raft;
+package io.github.xinfra.lab.raft.base;
 
+import io.github.xinfra.lab.raft.RaftGroup;
+import io.github.xinfra.lab.raft.RaftNode;
+import io.github.xinfra.lab.raft.RaftNodeConfig;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.core.log.MemoryRaftLogType;
 
@@ -34,8 +38,10 @@ public class LocalXRaftNode extends XRaftNode {
 		return raftPeerNodes;
 	}
 
-	public void addRaftPeerNode(RaftNode raftNode) {
-		raftPeerNodes.add(raftNode);
+	public void addRaftPeerNode(RaftNode... raftNodes) {
+		for (RaftNode raftNode : raftNodes) {
+			raftPeerNodes.add(raftNode);
+		}
 	}
 
 }
