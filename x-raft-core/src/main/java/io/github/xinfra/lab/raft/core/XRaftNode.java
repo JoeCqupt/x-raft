@@ -77,7 +77,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		raftServerTransport.startup();
 		raftServerTransport.addRaftPeers(state.getRaftConfiguration().getOtherRaftPeers());
 		// todo: start role by config
-		changeToFollower();
+		state.changeToFollower();
 	}
 
 	@Override
@@ -86,7 +86,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public synchronized VoteResponse requestVote(VoteRequest voteRequest) {
+	public VoteResponse requestVote(VoteRequest voteRequest) {
 		Verify.verify(isStarted(), "RaftNode is not started yet.");
 		// todo verify raft group
 
@@ -117,4 +117,5 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		Long delayMills = raftNodeConfig.getElectionTimeoutDelayMills();
 		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
+
 }

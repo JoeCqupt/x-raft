@@ -55,7 +55,7 @@ public class VoteContext {
 			}
 		}
 		// check leadership
-		if(preVote){
+		if (preVote) {
 			// todo check leadership
 		}
 		// todo

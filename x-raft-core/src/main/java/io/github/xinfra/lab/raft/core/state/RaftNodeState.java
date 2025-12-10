@@ -29,11 +29,11 @@ public class RaftNodeState {
 
 	private final RaftConfigurationState raftConfigurationState;
 
-	private  FollowerState followerState;
+	private FollowerState followerState;
 
-	private  CandidateState candidateState ;
+	private CandidateState candidateState;
 
-	private final AtomicReference<LeaderState> leaderState = new AtomicReference<>();
+	private LeaderState leaderState;
 
 	public RaftNodeState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
@@ -41,7 +41,8 @@ public class RaftNodeState {
 				new PeerConfiguration(xRaftNode.getRaftGroup().getPeers()));
 		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
 		this.followerState = new FollowerState(xRaftNode);
-		this.candidateState =new CandidateState(xRaftNode);
+		this.candidateState = new CandidateState(xRaftNode);
+		this.leaderState = new LeaderState(xRaftNode);
 	}
 
 	public synchronized void changeToFollower() {
@@ -50,7 +51,7 @@ public class RaftNodeState {
 			candidateState.shutdown();
 		}
 		if (role == RaftRole.LEADER) {
-			shutdownLeaderState();
+			leaderState.shutdown();
 		}
 		if (role == RaftRole.LEARNER) {
 			// todo
@@ -73,23 +74,9 @@ public class RaftNodeState {
 	}
 
 	public synchronized void changeToLeader() {
-		candidateState.shutdown();
-		startLeaderState();
-	}
-
-
-
-	private void startLeaderState() {
 		role = RaftRole.LEADER;
-		leaderState.updateAndGet(current -> current == null ? new LeaderState(xRaftNode) : current).start();
-	}
-
-	private void shutdownLeaderState() {
-		LeaderState leader = leaderState.getAndSet(null);
-		if (leader != null) {
-			leader.shutdown();
-			leader.interrupt();
-		}
+		candidateState.shutdown();
+		leaderState.startup();
 	}
 
 	public RaftConfiguration getRaftConfiguration() {
@@ -99,4 +86,5 @@ public class RaftNodeState {
 	public void persistMetadata() {
 		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
+
 }

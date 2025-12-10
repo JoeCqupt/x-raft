@@ -15,7 +15,7 @@ public class FollowerState {
 
 	private volatile boolean running = true;
 
-	private Thread electionTimeoutTask ;
+	private Thread electionTimeoutTask;
 
 	public FollowerState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
@@ -26,7 +26,7 @@ public class FollowerState {
 	}
 
 	public synchronized void startup() {
-		if (running){
+		if (running) {
 			return;
 		}
 		running = true;
@@ -35,7 +35,7 @@ public class FollowerState {
 	}
 
 	public synchronized void shutdown() {
-		if (!running){
+		if (!running) {
 			return;
 		}
 		running = false;
@@ -45,12 +45,13 @@ public class FollowerState {
 		}
 	}
 
-	 class ElectionTimeoutTask extends Thread {
-		 public ElectionTimeoutTask() {
-			 super("ElectionTimeoutTask");
-		 }
+	class ElectionTimeoutTask extends Thread {
 
-		 @Override
+		public ElectionTimeoutTask() {
+			super("ElectionTimeoutTask");
+		}
+
+		@Override
 		public void run() {
 			while (shouldRun()) {
 				try {
@@ -74,13 +75,14 @@ public class FollowerState {
 			}
 		}
 
-		 private boolean timeout(Long electionTimeout) {
-			 return System.currentTimeMillis() - lastRpcTimeMills >= electionTimeout;
-		 }
+		private boolean timeout(Long electionTimeout) {
+			return System.currentTimeMillis() - lastRpcTimeMills >= electionTimeout;
+		}
 
-		 private boolean shouldRun() {
-			 return running && xRaftNode.getState().getRole() == RaftRole.FOLLOWER;
-		 }
+		private boolean shouldRun() {
+			return running && xRaftNode.getState().getRole() == RaftRole.FOLLOWER;
+		}
+
 	}
 
 }
