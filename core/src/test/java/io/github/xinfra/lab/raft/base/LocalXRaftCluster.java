@@ -11,63 +11,67 @@ import java.util.List;
 
 public class LocalXRaftCluster {
 
-    private java.lang.String raftGroupId;
-    List<LocalXRaftNode> raftNodes;
-    List<RaftPeerId> raftPeerIds;
-    private String raftGroup;
-    private int nodeNums;
+	private java.lang.String raftGroupId;
 
-    private static int initPort = 5000;
+	List<LocalXRaftNode> raftNodes;
 
-    public LocalXRaftCluster(java.lang.String raftGroupId, int nodeNums) {
-        this.raftGroupId = raftGroupId;
-        this.nodeNums = nodeNums;
-    }
+	List<RaftPeerId> raftPeerIds;
 
+	private String raftGroup;
 
-    public void startup() {
-        startupNodes();
-    }
+	private int nodeNums;
 
-    private void startupNodes() {
-        // init raftPeers
-        raftPeerIds = new ArrayList<>();
-        for (int i = 0; i < nodeNums; i++) {
-            RaftPeerId raftPeerId = new RaftPeerId();
-            raftPeerId.setPeerId("node" + i);
-            raftPeerId.setAddress(new InetSocketAddress("localhost", 5000 + i));
-            raftPeerIds.add(raftPeerId);
-        }
-        // init raftGroup
-        raftGroup = new String(raftGroupId, raftPeerIds);
-        // init raftNodes
-        raftNodes = new ArrayList<>();
-        for (RaftPeerId raftPeerId : raftPeerIds) {
-            LocalXRaftNode localXRaftNode = new LocalXRaftNode(raftPeerId, raftGroup);
-            localXRaftNode.addRaftPeerNode();
-            raftNodes.add(localXRaftNode);
-        }
-        // add raftPeerNode
-        for (LocalXRaftNode raftNode : raftNodes) {
-            for (RaftNode otherRaftNode : raftNodes) {
-                if (raftNode != otherRaftNode) {
-                    raftNode.addRaftPeerNode(otherRaftNode);
-                }
-            }
-        }
+	private static int initPort = 5000;
 
-        // startup raftNodes
-        for (LocalXRaftNode raftNode : raftNodes) {
-            raftNode.startup();
-        }
-    }
+	public LocalXRaftCluster(java.lang.String raftGroupId, int nodeNums) {
+		this.raftGroupId = raftGroupId;
+		this.nodeNums = nodeNums;
+	}
 
-    public RaftPeerId getLeaderPeer() {
-        for (LocalXRaftNode raftNode : raftNodes) {
-            if (raftNode.getState().getRole().equals(RaftRole.LEADER)) {
-                return raftNode.raftPeer();
-            }
-        }
-        return null;
-    }
+	public void startup() {
+		startupNodes();
+	}
+
+	private void startupNodes() {
+		// init raftPeers
+		raftPeerIds = new ArrayList<>();
+		for (int i = 0; i < nodeNums; i++) {
+			RaftPeerId raftPeerId = new RaftPeerId();
+			raftPeerId.setPeerId("node" + i);
+			raftPeerId.setAddress(new InetSocketAddress("localhost", 5000 + i));
+			raftPeerIds.add(raftPeerId);
+		}
+		// init raftGroup
+		raftGroup = new String(raftGroupId, raftPeerIds);
+		// init raftNodes
+		raftNodes = new ArrayList<>();
+		for (RaftPeerId raftPeerId : raftPeerIds) {
+			LocalXRaftNode localXRaftNode = new LocalXRaftNode(raftPeerId, raftGroup);
+			localXRaftNode.addRaftPeerNode();
+			raftNodes.add(localXRaftNode);
+		}
+		// add raftPeerNode
+		for (LocalXRaftNode raftNode : raftNodes) {
+			for (RaftNode otherRaftNode : raftNodes) {
+				if (raftNode != otherRaftNode) {
+					raftNode.addRaftPeerNode(otherRaftNode);
+				}
+			}
+		}
+
+		// startup raftNodes
+		for (LocalXRaftNode raftNode : raftNodes) {
+			raftNode.startup();
+		}
+	}
+
+	public RaftPeerId getLeaderPeer() {
+		for (LocalXRaftNode raftNode : raftNodes) {
+			if (raftNode.getState().getRole().equals(RaftRole.LEADER)) {
+				return raftNode.raftPeerId();
+			}
+		}
+		return null;
+	}
+
 }

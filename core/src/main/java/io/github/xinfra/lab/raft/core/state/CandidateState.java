@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CandidateState extends Thread {
 
-	private volatile boolean running ;
+	private volatile boolean running;
 
 	private final XRaftNode xRaftNode;
 
@@ -90,7 +90,7 @@ public class CandidateState extends Thread {
 				}
 				else {
 					electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
-					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeer().getPeerId());
+					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
 					xRaftNode.getState().persistMetadata();
 				}
 				raftConfiguration = xRaftNode.getState().getRaftConfiguration();
@@ -128,7 +128,7 @@ public class CandidateState extends Thread {
 
 		private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
 				TermIndex lastEntryTermIndex) throws InterruptedException {
-			if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.raftPeer()))) {
+			if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.raftPeerId()))) {
 				return new VoteResult(electionTerm, Status.NOT_IN_CONF);
 			}
 
@@ -139,8 +139,8 @@ public class CandidateState extends Thread {
 
 			// init ballot box
 			BallotBox ballotBox = new BallotBox(raftConfiguration);
-			// vote to raftPeer
-			ballotBox.grantVote(xRaftNode.raftPeer().getPeerId());
+			// vote to raftPeerId
+			ballotBox.grantVote(xRaftNode.raftPeerId().getPeerId());
 
 			// todo: close it
 			ExecutorCompletionService<VoteResponse> voteExecutor = new ExecutorCompletionService<>(
@@ -149,11 +149,11 @@ public class CandidateState extends Thread {
 				// build request
 				VoteRequest voteRequest = new VoteRequest();
 				voteRequest.setPreVote(preVote);
-				voteRequest.setCandidateId(xRaftNode.raftPeer().getPeerId());
+				voteRequest.setCandidateId(xRaftNode.raftPeerId().getPeerId());
 				voteRequest.setTerm(electionTerm);
 				voteRequest.setLastLogIndex(lastEntryTermIndex.getIndex());
 				voteRequest.setLastLogTerm(lastEntryTermIndex.getTerm());
-				voteRequest.setRequestPeerId(xRaftNode.raftPeer().getPeerId());
+				voteRequest.setRequestPeerId(xRaftNode.raftPeerId().getPeerId());
 				voteRequest.setReplyPeerId(raftPeerId.getPeerId());
 
 				voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));

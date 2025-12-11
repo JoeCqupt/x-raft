@@ -10,26 +10,27 @@ import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public class BaseUnitTest {
-    static LocalXRaftCluster cluster;
 
-    @BeforeAll
-    public static void setupCluster() {
-        cluster = new LocalXRaftCluster("test-group", 3);
-        cluster.startup();
-    }
+	static LocalXRaftCluster cluster;
 
-    @Test
-    public void testLeaderElection() throws InterruptedException, TimeoutException {
+	@BeforeAll
+	public static void setupCluster() {
+		cluster = new LocalXRaftCluster("test-group", 3);
+		cluster.startup();
+	}
 
-        Wait.untilIsTrue(() -> {
-            RaftPeerId leader = cluster.getLeaderPeer();
-            if (leader != null) {
-                log.info("cluster: {}", cluster);
-                return true;
-            }
-            return false;
-        }, 30, 100);
+	@Test
+	public void testLeaderElection() throws InterruptedException, TimeoutException {
 
-    }
+		Wait.untilIsTrue(() -> {
+			RaftPeerId leader = cluster.getLeaderPeer();
+			if (leader != null) {
+				log.info("cluster: {}", cluster);
+				return true;
+			}
+			return false;
+		}, 30, 100);
+
+	}
 
 }

@@ -11,5 +11,6 @@ public class RaftPeerId {
 
 	private InetSocketAddress address;
 
-	private int priority = 1; //todo: default priority
+	private int priority = 1; // todo: default priority
+
 }

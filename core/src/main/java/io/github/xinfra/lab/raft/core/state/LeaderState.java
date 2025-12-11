@@ -17,7 +17,7 @@ public class LeaderState extends Thread {
 
 	private static final Logger log = LoggerFactory.getLogger(LeaderState.class);
 
-	private volatile boolean running ;
+	private volatile boolean running;
 
 	private final XRaftNode xRaftNode;
 
@@ -36,8 +36,8 @@ public class LeaderState extends Thread {
 		if (running) {
 			return;
 		}
-		// set leader id to raftPeer id
-		xRaftNode.getState().getLeaderId().set(xRaftNode.raftPeer().getPeerId());
+		// set leader id to raftPeerId id
+		xRaftNode.getState().getLeaderId().set(xRaftNode.raftPeerId().getPeerId());
 		// append an entry to log when leader startup
 		// todo: append a no-op entry or configuration entry
 		xRaftNode.raftLog().append(null);

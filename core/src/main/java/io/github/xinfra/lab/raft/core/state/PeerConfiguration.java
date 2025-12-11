@@ -38,7 +38,9 @@ public class PeerConfiguration {
 		this.raftPeerMap = peers.stream().collect(Collectors.toMap(RaftPeerId::getPeerId, Function.identity()));
 
 		this.votingPeers = peers.stream().filter(p -> p.getInitRole() != RaftRole.LEARNER).collect(Collectors.toList());
-		this.nonVotingPeers = peers.stream().filter(p -> p.getInitRole() == RaftRole.LEARNER).collect(Collectors.toList());
+		this.nonVotingPeers = peers.stream()
+			.filter(p -> p.getInitRole() == RaftRole.LEARNER)
+			.collect(Collectors.toList());
 	}
 
 	public boolean hasVotingPeersMajority(Set<String> peerIds) {

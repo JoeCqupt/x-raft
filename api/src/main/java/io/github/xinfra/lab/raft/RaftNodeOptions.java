@@ -4,7 +4,6 @@ import io.github.xinfra.lab.raft.log.RaftLogType;
 import io.github.xinfra.lab.raft.transport.TransportType;
 import lombok.Data;
 
-import java.util.List;
 
 @Data
 public class RaftNodeOptions {
@@ -18,9 +17,5 @@ public class RaftNodeOptions {
 	private Long electionTimeoutDelayMills = 150L;
 
 	private Long rpcTimeoutMills = 100L;
-
-    List<RaftPeerId> peers;
-
-    List<RaftPeerId> learners;
 
 }

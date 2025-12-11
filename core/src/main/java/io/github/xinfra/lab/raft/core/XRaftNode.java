@@ -48,7 +48,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public RaftPeerId raftPeer() {
+	public RaftPeerId raftPeerId() {
 		return raftPeerId;
 	}
 

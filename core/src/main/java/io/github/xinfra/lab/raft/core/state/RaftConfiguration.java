@@ -44,7 +44,7 @@ public class RaftConfiguration {
 	}
 
 	/**
-	 * all voting raft peers exclude raftPeer
+	 * all voting raft peers exclude raftPeerId
 	 * @return
 	 */
 	public Set<RaftPeerId> getOtherVotingRaftPeers() {
@@ -67,7 +67,7 @@ public class RaftConfiguration {
 	}
 
 	/**
-	 * all raft peers exclude raftPeer
+	 * all raft peers exclude raftPeerId
 	 * @return
 	 */
 	public Set<RaftPeerId> getOtherRaftPeers() {
@@ -80,13 +80,13 @@ public class RaftConfiguration {
 	 * @param candidateId
 	 * @return maybe null
 	 */
-    public RaftPeerId getVotingRaftPeer(String candidateId) {
-        RaftPeerId raftPeerId = getVotingRaftPeer(conf, candidateId);
-        if (raftPeerId != null) {
-            return raftPeerId;
-        }
-        return getVotingRaftPeer(oldConf, candidateId);
-    }
+	public RaftPeerId getVotingRaftPeer(String candidateId) {
+		RaftPeerId raftPeerId = getVotingRaftPeer(conf, candidateId);
+		if (raftPeerId != null) {
+			return raftPeerId;
+		}
+		return getVotingRaftPeer(oldConf, candidateId);
+	}
 
 	private RaftPeerId getVotingRaftPeer(PeerConfiguration conf, String candidateId) {
 		RaftPeerId raftPeerId = conf.getRaftPeerMap().get(candidateId);
