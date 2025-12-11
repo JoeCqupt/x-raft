@@ -11,7 +11,5 @@ public class RaftPeer {
 
 	private InetSocketAddress address;
 
-	private RaftRole initRole = RaftRole.FOLLOWER;
-
 	private int priority = 1; //todo: default priority
 }

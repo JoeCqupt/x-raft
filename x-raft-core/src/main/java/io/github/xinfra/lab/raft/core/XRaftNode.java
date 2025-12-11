@@ -2,7 +2,6 @@ package io.github.xinfra.lab.raft.core;
 
 import com.google.common.base.Verify;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.String;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
@@ -26,7 +25,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private RaftPeer raftPeer;
 
-	private String raftGroup;
+	private String raftGroupId;
 
 	@Getter
 	private RaftNodeOptions raftNodeOptions;
@@ -39,9 +38,9 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private RaftServerTransport raftServerTransport;
 
-	public XRaftNode(RaftPeer raftPeer, String raftGroup, RaftNodeOptions raftNodeOptions) {
+	public XRaftNode(RaftPeer raftPeer, String raftGroupId, RaftNodeOptions raftNodeOptions) {
 		this.raftPeer = raftPeer;
-		this.raftGroup = raftGroup;
+		this.raftGroupId = raftGroupId;
 		this.raftNodeOptions = raftNodeOptions;
 		this.raftServerTransport = raftNodeOptions.getTransportType().newTransport(this);
 		this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
@@ -55,7 +54,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	@Override
 	public String getRaftGroupId() {
-		return raftGroup;
+		return raftGroupId;
 	}
 
 	@Override
