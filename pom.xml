@@ -9,10 +9,10 @@
 
   <name>x-raft</name>
   <modules>
-    <module>x-raft-api</module>
-    <module>x-raft-core</module>
-    <module>x-raft-transport</module>
-    <module>x-raft-storage</module>
+    <module>api</module>
+    <module>core</module>
+    <module>transport</module>
+    <module>storage</module>
   </modules>
 
   <properties>
