@@ -19,10 +19,9 @@ public class RaftGroupOptions {
     @Getter
     List<RaftPeerId> learners;
 
-
     @Getter
     @Setter
-    private  RaftNodeOptions raftNodeOptions;
+    private RaftNodeOptions raftNodeOptions;
 
 
     public void setPeers(List<RaftPeerId> peers) {

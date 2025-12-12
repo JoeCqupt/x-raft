@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft;
 
-public interface RaftGroup {
+public interface RaftGroup extends LifeCycle {
 
     String getRaftGroupId();
 

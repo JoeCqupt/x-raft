@@ -10,8 +10,6 @@ public interface RaftNode extends LifeCycle, RaftServerProtocol, RaftClientProto
 
 	RaftPeerId raftPeerId();
 
-	RaftNodeOptions getRaftNodeOptions();
-
 	RaftLog raftLog();
 
 }
