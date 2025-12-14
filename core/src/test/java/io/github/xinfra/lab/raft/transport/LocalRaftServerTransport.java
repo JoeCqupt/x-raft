@@ -3,7 +3,7 @@ package io.github.xinfra.lab.raft.transport;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
-import io.github.xinfra.lab.raft.base.LocalXRaftNode;
+import io.github.xinfra.lab.raft.base.TestRaftNode;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -26,19 +26,19 @@ public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftS
 
 	Map<String, RaftPeerId> raftPeerMap;
 
-	LocalXRaftNode localXRaftNode;
+	TestRaftNode testRaftNode;
 
 	public LocalRaftServerTransport(RaftNode raftNode) {
-		if (!(raftNode instanceof LocalXRaftNode)) {
-			throw new IllegalArgumentException("RaftNode must be LocalXRaftNode");
+		if (!(raftNode instanceof TestRaftNode)) {
+			throw new IllegalArgumentException("RaftNode must be TestRaftNode");
 		}
-		this.localXRaftNode = (LocalXRaftNode) raftNode;
+		this.testRaftNode = (TestRaftNode) raftNode;
 	}
 
 	@Override
 	public void startup() {
 		super.startup();
-		this.raftPeerNodes = localXRaftNode.raftPeerNodes();
+		this.raftPeerNodes = testRaftNode.raftPeerNodes();
 		this.raftPeerNodeMap = raftPeerNodes.stream()
 			.collect(Collectors.toMap(RaftNode::raftPeerId, Function.identity()));
 	}

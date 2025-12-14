@@ -1,6 +1,5 @@
 package io.github.xinfra.lab.raft.base;
 
-import io.github.xinfra.lab.raft.String;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
@@ -9,11 +8,11 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LocalXRaftCluster {
+public class TestXRaftGroup {
 
-	private java.lang.String raftGroupId;
+	private String raftGroupId;
 
-	List<LocalXRaftNode> raftNodes;
+	List<TestRaftNode> raftNodes;
 
 	List<RaftPeerId> raftPeerIds;
 
@@ -23,7 +22,7 @@ public class LocalXRaftCluster {
 
 	private static int initPort = 5000;
 
-	public LocalXRaftCluster(java.lang.String raftGroupId, int nodeNums) {
+	public TestXRaftGroup(String raftGroupId, int nodeNums) {
 		this.raftGroupId = raftGroupId;
 		this.nodeNums = nodeNums;
 	}
@@ -46,12 +45,12 @@ public class LocalXRaftCluster {
 		// init raftNodes
 		raftNodes = new ArrayList<>();
 		for (RaftPeerId raftPeerId : raftPeerIds) {
-			LocalXRaftNode localXRaftNode = new LocalXRaftNode(raftPeerId, raftGroup);
-			localXRaftNode.addRaftPeerNode();
-			raftNodes.add(localXRaftNode);
+			TestRaftNode testRaftNode = new TestRaftNode(raftPeerId, raftGroup);
+			testRaftNode.addRaftPeerNode();
+			raftNodes.add(testRaftNode);
 		}
 		// add raftPeerNode
-		for (LocalXRaftNode raftNode : raftNodes) {
+		for (TestRaftNode raftNode : raftNodes) {
 			for (RaftNode otherRaftNode : raftNodes) {
 				if (raftNode != otherRaftNode) {
 					raftNode.addRaftPeerNode(otherRaftNode);
@@ -60,13 +59,13 @@ public class LocalXRaftCluster {
 		}
 
 		// startup raftNodes
-		for (LocalXRaftNode raftNode : raftNodes) {
+		for (TestRaftNode raftNode : raftNodes) {
 			raftNode.startup();
 		}
 	}
 
 	public RaftPeerId getLeaderPeer() {
-		for (LocalXRaftNode raftNode : raftNodes) {
+		for (TestRaftNode raftNode : raftNodes) {
 			if (raftNode.getState().getRole().equals(RaftRole.LEADER)) {
 				return raftNode.raftPeerId();
 			}

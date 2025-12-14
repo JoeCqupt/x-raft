@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.protocol;
 
-public interface RaftServerProtocol {
+public interface RaftProtocol {
 
 	VoteResponse requestVote(VoteRequest voteRequest);
 

@@ -15,11 +15,11 @@ import static io.github.xinfra.lab.raft.transport.LocalTransportType.local;
 /**
  * for unit test
  */
-public class LocalXRaftNode extends XRaftNode {
+public class TestRaftNode extends XRaftNode {
 
 	private List<RaftNode> raftPeerNodes = new ArrayList<>();
 
-	public LocalXRaftNode(RaftPeerId raftPeerId, String raftGroup) {
+	public TestRaftNode(RaftPeerId raftPeerId, String raftGroup) {
 		super(raftPeerId, raftGroup, raftNodeConfig());
 	}
 

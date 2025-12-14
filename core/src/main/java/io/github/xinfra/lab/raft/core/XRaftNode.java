@@ -6,6 +6,9 @@ import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.core.common.Responses;
+import io.github.xinfra.lab.raft.core.conf.Configuration;
+import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
 import io.github.xinfra.lab.raft.core.state.RaftNodeState;
 import io.github.xinfra.lab.raft.log.RaftLog;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
@@ -24,92 +27,105 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
-    private RaftPeerId raftPeerId;
+	private RaftPeerId raftPeerId;
 
-    @Getter
-    private RaftNodeOptions raftNodeOptions;
+	@Getter
+	private RaftNodeOptions raftNodeOptions;
 
-    private RaftLog raftLog;
+	private RaftLog raftLog;
 
-    @Getter
-    private RaftNodeState state;
+	@Getter
+	private RaftNodeState state;
 
-    @Getter
-    private TransportClient transportClient;
+	@Getter
+	private RaftConfigurationState raftConfigurationState;
 
-    public XRaftNode(RaftNodeOptions raftNodeOptions) {
-        this.raftPeerId = raftNodeOptions.getRaftPeerId();
-        this.raftNodeOptions = raftNodeOptions;
-        if (raftNodeOptions.isShareTransportClientFlag() ) {
-            this.transportClient = raftNodeOptions.getShareTransportClient();
-        } else {
-            this.transportClient = raftNodeOptions.getTransportType().newClient(raftNodeOptions.getTransportClientOptions());
-        }
-        this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
-        this.state = new RaftNodeState(this);
-    }
+	@Getter
+	private TransportClient transportClient;
 
-    @Override
-    public RaftPeerId raftPeerId() {
-        return raftPeerId;
-    }
+	public XRaftNode(RaftNodeOptions raftNodeOptions) {
+		this.raftPeerId = raftNodeOptions.getRaftPeerId();
+		this.raftNodeOptions = raftNodeOptions;
+		if (raftNodeOptions.isShareTransportClientFlag()) {
+			this.transportClient = raftNodeOptions.getShareTransportClient();
+		}
+		else {
+			this.transportClient = raftNodeOptions.getTransportType()
+				.newClient(raftNodeOptions.getTransportClientOptions());
+		}
+		this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
+		this.state = new RaftNodeState(this);
 
-    @Override
-    public RaftLog raftLog() {
-        return raftLog;
-    }
+		// init raft configuration
+		Configuration conf = new Configuration(raftNodeOptions.getPeers(), raftNodeOptions.getLearners());
+		ConfigurationEntry initialConfiguration = new ConfigurationEntry(conf, null);
+		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
+	}
 
-    @Override
-    public synchronized void startup() {
-        super.startup();
-        // todo: init raft storage
-        // todo: init raft log
-        // todo: init state machine
-        if (!raftNodeOptions.isShareTransportClientFlag()){
-            transportClient.startup();
-        }
-        // todo: connect to other pees @joecqupt
-        Set<RaftPeerId> otherRaftPeers = state.getRaftConfiguration().getOtherRaftPeers();
-        otherRaftPeers.forEach(v->transportClient.connect(v.getAddress()));
-        state.changeToFollower();
-    }
+	@Override
+	public RaftPeerId raftPeerId() {
+		return raftPeerId;
+	}
 
-    @Override
-    public synchronized void shutdown() {
-        super.shutdown();
-    }
+	@Override
+	public RaftLog raftLog() {
+		return raftLog;
+	}
 
-    @Override
-    public VoteResponse requestVote(VoteRequest voteRequest) {
-        Verify.verify(isStarted(), "RaftNode is not started yet.");
-        // todo verify raft group
+	@Override
+	public synchronized void startup() {
+		super.startup();
+		// todo: init raft storage
+		// todo: init raft log
+		// todo: init state machine
+		if (!raftNodeOptions.isShareTransportClientFlag()) {
+			transportClient.startup();
+		}
+		// todo: connect to other pees @joecqupt
+		Set<RaftPeerId> otherRaftPeers = state.getRaftConfiguration().getOtherRaftPeers();
+		otherRaftPeers.forEach(v -> transportClient.connect(v.getAddress()));
+		state.changeToFollower();
+	}
 
-        VoteContext voteContext = new VoteContext(this, voteRequest);
-        boolean voteGranted = voteContext.decideVote();
-        // todo
-        boolean shouldShutdown = false;
+	@Override
+	public synchronized void shutdown() {
+		super.shutdown();
+		if (!raftNodeOptions.isShareTransportClientFlag()) {
+			transportClient.shutdown();
+		}
+	}
 
-        return Responses.voteResponse(voteRequest.getRequestPeerId(), voteRequest.getReplyPeerId(),
-                state.getCurrentTerm().get(), voteGranted, shouldShutdown);
-    }
+	@Override
+	public VoteResponse requestVote(VoteRequest voteRequest) {
+		Verify.verify(isStarted(), "RaftNode is not started yet.");
+		// todo verify raft group
 
-    @Override
-    public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
+		VoteContext voteContext = new VoteContext(this, voteRequest);
+		boolean voteGranted = voteContext.decideVote();
+		// todo
+		boolean shouldShutdown = false;
 
-        // todo
-        return null;
-    }
+		return Responses.voteResponse(voteRequest.getRequestPeerId(), voteRequest.getReplyPeerId(),
+				state.getCurrentTerm().get(), voteGranted, shouldShutdown);
+	}
 
-    @Override
-    public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
-        // todo
-        return null;
-    }
+	@Override
+	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
 
-    public Long getRandomElectionTimeoutMills() {
-        Long timeoutMills = raftNodeOptions.getElectionTimeoutMills();
-        Long delayMills = raftNodeOptions.getElectionTimeoutDelayMills();
-        return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
-    }
+		// todo
+		return null;
+	}
+
+	@Override
+	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
+		// todo
+		return null;
+	}
+
+	public Long getRandomElectionTimeoutMills() {
+		Long timeoutMills = raftNodeOptions.getElectionTimeoutMills();
+		Long delayMills = raftNodeOptions.getElectionTimeoutDelayMills();
+		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
+	}
 
 }

@@ -2,6 +2,9 @@ package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.core.conf.Configuration;
+import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,8 +30,6 @@ public class RaftNodeState {
 
 	private final XRaftNode xRaftNode;
 
-	private final RaftConfigurationState raftConfigurationState;
-
 	private FollowerState followerState;
 
 	private CandidateState candidateState;
@@ -37,9 +38,6 @@ public class RaftNodeState {
 
 	public RaftNodeState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
-		RaftConfiguration initialConfiguration = new RaftConfiguration(xRaftNode.raftPeerId(), null,
-				new PeerConfiguration(xRaftNode.getRaftGroupId().getPeers()));
-		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
 		this.followerState = new FollowerState(xRaftNode);
 		this.candidateState = new CandidateState(xRaftNode);
 		this.leaderState = new LeaderState(xRaftNode);
@@ -79,7 +77,7 @@ public class RaftNodeState {
 		leaderState.startup();
 	}
 
-	public RaftConfiguration getRaftConfiguration() {
+	public ConfigurationEntry getRaftConfiguration() {
 		return raftConfigurationState.getCurrentConfiguration();
 	}
 

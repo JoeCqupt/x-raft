@@ -7,7 +7,8 @@ import lombok.Data;
 @Data
 public class RaftServerOptions {
 
-    TransportServerOptions transportServerOptions;
+	TransportServerOptions transportServerOptions;
 
-    private TransportType transportType;
+	private TransportType transportType;
+
 }

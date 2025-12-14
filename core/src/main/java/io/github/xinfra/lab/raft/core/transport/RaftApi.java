@@ -4,17 +4,17 @@ import io.github.xinfra.lab.raft.transport.RequestApi;
 
 public enum RaftApi implements RequestApi {
 
-    requestVote("/raft/requestVote"),
-    appendEntries("/raft/appendEntries");
+	requestVote("/raft/requestVote"), appendEntries("/raft/appendEntries");
 
-    private String path;
+	private String path;
 
-    RaftApi(String path) {
-        this.path = path;
-    }
+	RaftApi(String path) {
+		this.path = path;
+	}
 
-    @Override
-    public String path() {
-        return path;
-    }
+	@Override
+	public String path() {
+		return path;
+	}
+
 }

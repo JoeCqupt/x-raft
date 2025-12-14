@@ -7,7 +7,7 @@ import java.io.Serializable;
 @Data
 public abstract class BaseInfo implements Serializable {
 
-    String raftGroupId;
+	String raftGroupId;
 
 	String requestPeerId;
 

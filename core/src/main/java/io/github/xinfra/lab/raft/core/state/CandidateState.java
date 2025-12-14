@@ -3,6 +3,7 @@ package io.github.xinfra.lab.raft.core.state;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
@@ -77,7 +78,7 @@ public class CandidateState extends Thread {
 
 		private boolean askForVotes(boolean preVote) throws InterruptedException {
 			Long electionTerm;
-			RaftConfiguration raftConfiguration;
+			ConfigurationEntry configurationEntry;
 			TermIndex lastEntryTermIndex;
 			synchronized (xRaftNode) {
 				if (!shouldRun()) {
@@ -93,11 +94,11 @@ public class CandidateState extends Thread {
 					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
 					xRaftNode.getState().persistMetadata();
 				}
-				raftConfiguration = xRaftNode.getState().getRaftConfiguration();
+				configurationEntry = xRaftNode.getState().getRaftConfiguration();
 				lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
 			}
 
-			VoteResult voteResult = askForVotes(preVote, electionTerm, raftConfiguration, lastEntryTermIndex);
+			VoteResult voteResult = askForVotes(preVote, electionTerm, configurationEntry, lastEntryTermIndex);
 
 			synchronized (xRaftNode) {
 				if (!shouldRun()) {
@@ -126,19 +127,19 @@ public class CandidateState extends Thread {
 			}
 		}
 
-		private VoteResult askForVotes(boolean preVote, Long electionTerm, RaftConfiguration raftConfiguration,
+		private VoteResult askForVotes(boolean preVote, Long electionTerm, ConfigurationEntry configurationEntry,
 				TermIndex lastEntryTermIndex) throws InterruptedException {
-			if (!(raftConfiguration.getVotingRaftPeers().contains(xRaftNode.raftPeerId()))) {
+			if (!(configurationEntry.getVotingRaftPeers().contains(xRaftNode.raftPeerId()))) {
 				return new VoteResult(electionTerm, Status.NOT_IN_CONF);
 			}
 
-			Set<RaftPeerId> otherVotingRaftPeerIds = raftConfiguration.getOtherVotingRaftPeers();
+			Set<RaftPeerId> otherVotingRaftPeerIds = configurationEntry.getOtherVotingRaftPeers();
 			if (otherVotingRaftPeerIds.isEmpty()) {
 				return new VoteResult(electionTerm, Status.PASSED);
 			}
 
 			// init ballot box
-			BallotBox ballotBox = new BallotBox(raftConfiguration);
+			BallotBox ballotBox = new BallotBox(configurationEntry);
 			// vote to raftPeerId
 			ballotBox.grantVote(xRaftNode.raftPeerId().getPeerId());
 
