@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft;
 
-import io.github.xinfra.lab.raft.base.TestXRaftGroup;
+import io.github.xinfra.lab.raft.base.TestCluster;
 import io.github.xinfra.lab.raft.common.Wait;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,11 +11,11 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class BaseUnitTest {
 
-	static TestXRaftGroup cluster;
+	static TestCluster cluster;
 
 	@BeforeAll
 	public static void setupCluster() {
-		cluster = new TestXRaftGroup("test-group", 3);
+		cluster = new TestCluster("test-raft-group", 3);
 		cluster.startup();
 	}
 
@@ -25,7 +25,7 @@ public class BaseUnitTest {
 		Wait.untilIsTrue(() -> {
 			RaftPeerId leader = cluster.getLeaderPeer();
 			if (leader != null) {
-				log.info("cluster: {}", cluster);
+				log.info("cluster:{}" , cluster.printRaftNodes());
 				return true;
 			}
 			return false;

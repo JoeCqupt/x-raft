@@ -46,7 +46,7 @@ public class XRaftServer extends AbstractLifeCycle implements RaftServer {
 	}
 
 	@Override
-	public void startRaftGroup(RaftGroupOptions raftGroupOptions) {
+	public RaftGroup startRaftGroup(RaftGroupOptions raftGroupOptions) {
 		ensureStarted();
 		if (raftGroupMap.containsKey(raftGroupOptions.getRaftGroupId())) {
 			throw new IllegalArgumentException("raft group already exists");
@@ -54,6 +54,7 @@ public class XRaftServer extends AbstractLifeCycle implements RaftServer {
 		RaftGroup raftGroup = new XRaftGroup(raftGroupOptions);
 		raftGroup.startup();
 		raftGroupMap.put(raftGroupOptions.getRaftGroupId(), raftGroup);
+        return raftGroup;
 	}
 
 	@Override

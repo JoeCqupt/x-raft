@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface RaftServer extends LifeCycle {
 
-	void startRaftGroup(RaftGroupOptions raftGroupOptions);
+	RaftGroup startRaftGroup(RaftGroupOptions raftGroupOptions);
 
 	List<RaftGroup> getRaftGroups();
 

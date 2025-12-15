@@ -11,4 +11,6 @@ public interface RaftNode extends LifeCycle, RaftProtocol, RaftClientProtocol, A
 
 	RaftLog raftLog();
 
+    RaftRole raftRole();
+
 }

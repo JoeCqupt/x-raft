@@ -5,6 +5,7 @@ import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.common.Responses;
 import io.github.xinfra.lab.raft.core.conf.Configuration;
 import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
@@ -21,6 +22,7 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.management.relation.Role;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -72,7 +74,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return raftLog;
 	}
 
-	@Override
+    @Override
+    public RaftRole raftRole() {
+        return state.getRole();
+    }
+
+    @Override
 	public synchronized void startup() {
 		super.startup();
 		// todo: init raft storage
@@ -81,7 +88,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.startup();
 		}
-		// todo: connect to other pees @joecqupt
+		// todo: connect to other nodes @joecqupt
 		Set<RaftPeerId> otherRaftPeers = state.getRaftConfiguration().getOtherRaftPeers();
 		otherRaftPeers.forEach(v -> transportClient.connect(v.getAddress()));
 		state.changeToFollower();
