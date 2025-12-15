@@ -43,7 +43,10 @@ public class LeaderState extends Thread {
 		xRaftNode.raftLog().append(null);
 
 		// init log appenders
-		Set<RaftPeerId> otherRaftPeerIds = xRaftNode.getState().getRaftConfiguration().getOtherRaftPeers();
+		List<RaftPeerId> otherRaftPeerIds = xRaftNode.getConfigState().getCurrentConfiguration().getPeers();
+        // remove self
+        otherRaftPeerIds.remove(xRaftNode.raftPeerId());
+
 		for (RaftPeerId raftPeerId : otherRaftPeerIds) {
 			logReplicators.add(new LogReplicator(raftPeerId, xRaftNode));
 		}
@@ -51,6 +54,9 @@ public class LeaderState extends Thread {
 		for (LogReplicator logReplicator : logReplicators) {
 			logReplicator.start();
 		}
+
+        // todo : learner log
+
 		stateEventExecutor = new StateEventExecutor();
 		stateEventExecutor.start();
 	}

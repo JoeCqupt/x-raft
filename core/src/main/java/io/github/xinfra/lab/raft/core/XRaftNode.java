@@ -22,7 +22,8 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.management.relation.Role;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -40,7 +41,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	private RaftNodeState state;
 
 	@Getter
-	private RaftConfigurationState raftConfigurationState;
+	private RaftConfigurationState configState;
 
 	@Getter
 	private TransportClient transportClient;
@@ -61,7 +62,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		// init raft configuration
 		Configuration conf = new Configuration(raftNodeOptions.getPeers(), raftNodeOptions.getLearners());
 		ConfigurationEntry initialConfiguration = new ConfigurationEntry(conf, null);
-		this.raftConfigurationState = new RaftConfigurationState(initialConfiguration);
+		this.configState = new RaftConfigurationState(initialConfiguration);
 	}
 
 	@Override
@@ -88,9 +89,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.startup();
 		}
-		// todo: connect to other nodes @joecqupt
-		Set<RaftPeerId> otherRaftPeers = state.getRaftConfiguration().getOtherRaftPeers();
-		otherRaftPeers.forEach(v -> transportClient.connect(v.getAddress()));
+        // todo: connect to peers
 		state.changeToFollower();
 	}
 
@@ -100,6 +99,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.shutdown();
 		}
+        // todo: check
 	}
 
 	@Override

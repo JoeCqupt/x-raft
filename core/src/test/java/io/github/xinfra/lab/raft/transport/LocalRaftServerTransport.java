@@ -3,7 +3,6 @@ package io.github.xinfra.lab.raft.transport;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
-import io.github.xinfra.lab.raft.base.TestRaftNode;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * for unit test
  */
-public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftServerTransport {
+public class LocalRaftServerTransport extends AbstractLifeCycle  {
 
 	List<RaftNode> raftPeerNodes;
 
@@ -26,7 +25,6 @@ public class LocalRaftServerTransport extends AbstractLifeCycle implements RaftS
 
 	Map<String, RaftPeerId> raftPeerMap;
 
-	TestRaftNode testRaftNode;
 
 	public LocalRaftServerTransport(RaftNode raftNode) {
 		if (!(raftNode instanceof TestRaftNode)) {

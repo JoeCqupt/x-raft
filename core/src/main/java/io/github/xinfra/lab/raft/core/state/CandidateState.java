@@ -4,6 +4,7 @@ import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.core.transport.RaftApi;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
@@ -12,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -94,7 +96,7 @@ public class CandidateState extends Thread {
 					xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
 					xRaftNode.getState().persistMetadata();
 				}
-				configurationEntry = xRaftNode.getState().getRaftConfiguration();
+				configurationEntry = xRaftNode.getConfigState().getCurrentConfiguration();
 				lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
 			}
 
@@ -129,11 +131,14 @@ public class CandidateState extends Thread {
 
 		private VoteResult askForVotes(boolean preVote, Long electionTerm, ConfigurationEntry configurationEntry,
 				TermIndex lastEntryTermIndex) throws InterruptedException {
-			if (!(configurationEntry.getVotingRaftPeers().contains(xRaftNode.raftPeerId()))) {
+			if (!(configurationEntry.getPeers().contains(xRaftNode.raftPeerId()))) {
 				return new VoteResult(electionTerm, Status.NOT_IN_CONF);
 			}
 
-			Set<RaftPeerId> otherVotingRaftPeerIds = configurationEntry.getOtherVotingRaftPeers();
+			List<RaftPeerId> otherVotingRaftPeerIds = configurationEntry.getPeers();
+            // remove self
+             otherVotingRaftPeerIds.remove(xRaftNode.raftPeerId());
+
 			if (otherVotingRaftPeerIds.isEmpty()) {
 				return new VoteResult(electionTerm, Status.PASSED);
 			}
@@ -157,7 +162,8 @@ public class CandidateState extends Thread {
 				voteRequest.setRequestPeerId(xRaftNode.raftPeerId().getPeerId());
 				voteRequest.setReplyPeerId(raftPeerId.getPeerId());
 
-				voteExecutor.submit(() -> xRaftNode.getRaftServerTransport().requestVote(voteRequest));
+                // todo: add timeout & async  call
+				voteExecutor.submit(() -> xRaftNode.getTransportClient().blockingCall(RaftApi.requestVote, voteRequest));
 			}
 
 			int waitNum = otherVotingRaftPeerIds.size();

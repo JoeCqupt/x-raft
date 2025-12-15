@@ -5,23 +5,24 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class Configuration implements Serializable {
 
-	/**
-	 * All peers in the raft group. LEADER, CANDIDATE, FOLLOWER and Listener
-	 */
-	private final List<RaftPeerId> peers;
+    /**
+     * All peers in the raft group. LEADER, CANDIDATE, FOLLOWER and Listener
+     */
+    private final List<RaftPeerId> peers;
 
-	/**
-	 * Learners are non-voting members.
-	 */
-	private final List<RaftPeerId> listeners;
+    /**
+     * Learners are non-voting members.
+     */
+    private final List<RaftPeerId> learners;
 
-	public Configuration(List<RaftPeerId> peers, List<RaftPeerId> listeners) {
-		this.peers = peers;
-		this.listeners = listeners;
-	}
+    public Configuration(List<RaftPeerId> peers, List<RaftPeerId> learners) {
+        this.peers = peers;
+        this.learners = learners;
+    }
 
 }

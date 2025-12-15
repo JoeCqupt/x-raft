@@ -1,5 +1,6 @@
 package io.github.xinfra.lab.raft.core.conf;
 
+import io.github.xinfra.lab.raft.RaftPeerId;
 import lombok.Data;
 
 import java.util.LinkedList;
@@ -33,5 +34,9 @@ public class RaftConfigurationState {
 		}
 		setCurrentConfiguration(configurations.getLast());
 	}
+
+    public RaftPeerId getRaftPeerId(String peerId) {
+        return currentConfiguration.getRaftPeerId(peerId);
+    }
 
 }

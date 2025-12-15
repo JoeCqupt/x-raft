@@ -23,7 +23,7 @@ public class VoteContext {
 	public boolean decideVote() {
 		String candidateId = voteRequest.getCandidateId();
 		// check candidate peer
-		RaftPeerId candidate = raftNode.getState().getRaftConfiguration().getVotingRaftPeer(candidateId);
+        RaftPeerId candidate = raftNode.getConfigState().getCurrentConfiguration().getRaftPeerId(candidateId);
 		if (candidate == null) {
 			log.info("reject candidateId:{} not found.", candidateId);
 			return false;

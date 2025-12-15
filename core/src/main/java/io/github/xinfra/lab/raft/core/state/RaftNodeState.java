@@ -77,10 +77,6 @@ public class RaftNodeState {
 		leaderState.startup();
 	}
 
-	public ConfigurationEntry getRaftConfiguration() {
-		return raftConfigurationState.getCurrentConfiguration();
-	}
-
 	public void persistMetadata() {
 		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
