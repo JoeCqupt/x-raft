@@ -1,14 +1,17 @@
 package io.github.xinfra.lab.raft.transport;
 
-import io.github.xinfra.lab.raft.RaftNode;
-
 public enum LocalTransportType implements TransportType {
 
 	local;
 
 	@Override
-	public RaftServerTransport newTransport(RaftNode raftNode) {
-		return new LocalRaftServerTransport(raftNode);
+	public TransportClient newClient(TransportClientOptions transportClientOptions) {
+		return new LocalTransportClient(transportClientOptions);
+	}
+
+	@Override
+	public TransportServer newServer(TransportServerOptions transportServerOptions) {
+		return new LocalTransportServer(transportServerOptions);
 	}
 
 }

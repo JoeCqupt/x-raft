@@ -7,7 +7,9 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class VoteRequest extends BaseInfo implements Serializable {
+public class VoteRequest extends Message implements Serializable {
+
+	private boolean preVote;
 
 	private Long term;
 
@@ -16,7 +18,5 @@ public class VoteRequest extends BaseInfo implements Serializable {
 	private Long lastLogIndex;
 
 	private Long lastLogTerm;
-
-	private boolean preVote;
 
 }

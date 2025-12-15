@@ -30,7 +30,7 @@ public class XRaftServer extends AbstractLifeCycle implements RaftServer {
 	public void startup() {
 		super.startup();
 		TransportType transportType = raftServerOptions.getTransportType();
-		TransportServer transportServer = transportType.newServer(raftServerOptions.getTransportServerOptions());
+		transportServer = transportType.newServer(raftServerOptions.getTransportServerOptions());
 		// todo @joecqupt
 		transportServer.registerRequestHandler(RaftApi.requestVote, null);
 		// todo @joecqupt
@@ -54,7 +54,7 @@ public class XRaftServer extends AbstractLifeCycle implements RaftServer {
 		RaftGroup raftGroup = new XRaftGroup(raftGroupOptions);
 		raftGroup.startup();
 		raftGroupMap.put(raftGroupOptions.getRaftGroupId(), raftGroup);
-        return raftGroup;
+		return raftGroup;
 	}
 
 	@Override

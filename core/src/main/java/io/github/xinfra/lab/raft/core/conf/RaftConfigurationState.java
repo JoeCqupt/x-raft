@@ -35,8 +35,8 @@ public class RaftConfigurationState {
 		setCurrentConfiguration(configurations.getLast());
 	}
 
-    public RaftPeerId getRaftPeerId(String peerId) {
-        return currentConfiguration.getRaftPeerId(peerId);
-    }
+	public RaftPeerId getRaftPeerId(String peerId) {
+		return currentConfiguration.getRaftPeerId(peerId);
+	}
 
 }

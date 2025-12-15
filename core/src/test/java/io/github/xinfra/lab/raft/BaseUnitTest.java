@@ -25,7 +25,7 @@ public class BaseUnitTest {
 		Wait.untilIsTrue(() -> {
 			RaftPeerId leader = cluster.getLeaderPeer();
 			if (leader != null) {
-				log.info("cluster:{}" , cluster.printRaftNodes());
+				log.info("cluster:{}", cluster.printRaftNodes());
 				return true;
 			}
 			return false;

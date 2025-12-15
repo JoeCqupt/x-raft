@@ -12,6 +12,6 @@ public interface TransportClient extends LifeCycle {
 
 	void disconnect(SocketAddress socketAddress);
 
-	<T, R> R blockingCall(RequestApi requestApi, T request);
+	<T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request, CallOptions callOptions);
 
 }

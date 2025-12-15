@@ -9,7 +9,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class AppendEntriesRequest extends BaseInfo implements Serializable {
+public class AppendEntriesRequest extends Message implements Serializable {
 
 	private Long term;
 

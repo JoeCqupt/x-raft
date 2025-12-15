@@ -8,6 +8,7 @@ import io.github.xinfra.lab.raft.core.transport.RaftApi;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
+import io.github.xinfra.lab.raft.transport.CallOptions;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -136,8 +137,8 @@ public class CandidateState extends Thread {
 			}
 
 			List<RaftPeerId> otherVotingRaftPeerIds = configurationEntry.getPeers();
-            // remove self
-             otherVotingRaftPeerIds.remove(xRaftNode.raftPeerId());
+			// remove self
+			otherVotingRaftPeerIds.remove(xRaftNode.raftPeerId());
 
 			if (otherVotingRaftPeerIds.isEmpty()) {
 				return new VoteResult(electionTerm, Status.PASSED);
@@ -162,8 +163,9 @@ public class CandidateState extends Thread {
 				voteRequest.setRequestPeerId(xRaftNode.raftPeerId().getPeerId());
 				voteRequest.setReplyPeerId(raftPeerId.getPeerId());
 
-                // todo: add timeout & async  call
-				voteExecutor.submit(() -> xRaftNode.getTransportClient().blockingCall(RaftApi.requestVote, voteRequest));
+				// todo: add timeout & async call
+				voteExecutor.submit(() -> xRaftNode.getTransportClient()
+					.blockingCall(RaftApi.requestVote, raftPeerId.getAddress(), voteRequest, new CallOptions()));
 			}
 
 			int waitNum = otherVotingRaftPeerIds.size();

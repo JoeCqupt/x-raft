@@ -7,12 +7,13 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class VoteResponse extends BaseInfo implements Serializable {
+public class VoteResponse extends Message implements Serializable {
 
 	Long term;
 
 	boolean voteGranted;
 
+	// todo
 	boolean shouldShutdown;
 
 }

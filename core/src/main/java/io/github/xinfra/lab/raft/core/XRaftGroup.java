@@ -31,7 +31,7 @@ public class XRaftGroup extends AbstractLifeCycle implements RaftGroup {
 	@Override
 	public void startup() {
 		super.startup();
-		this.raftNode = new XRaftNode(raftGroupOptions.getRaftNodeOptions());
+		this.raftNode = new XRaftNode(raftGroupId, raftGroupOptions.getRaftNodeOptions());
 		this.raftNode.startup();
 	}
 

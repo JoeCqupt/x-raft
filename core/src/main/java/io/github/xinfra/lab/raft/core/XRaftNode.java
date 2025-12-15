@@ -22,13 +22,12 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
+
+	private String raftGroupId;
 
 	private RaftPeerId raftPeerId;
 
@@ -46,7 +45,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private TransportClient transportClient;
 
-	public XRaftNode(RaftNodeOptions raftNodeOptions) {
+	public XRaftNode(String raftGroupId, RaftNodeOptions raftNodeOptions) {
+		this.raftGroupId = raftGroupId;
 		this.raftPeerId = raftNodeOptions.getRaftPeerId();
 		this.raftNodeOptions = raftNodeOptions;
 		if (raftNodeOptions.isShareTransportClientFlag()) {
@@ -66,6 +66,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
+	public String raftGroupId() {
+		return raftGroupId;
+	}
+
+	@Override
 	public RaftPeerId raftPeerId() {
 		return raftPeerId;
 	}
@@ -75,21 +80,22 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return raftLog;
 	}
 
-    @Override
-    public RaftRole raftRole() {
-        return state.getRole();
-    }
+	@Override
+	public RaftRole raftRole() {
+		return state.getRole();
+	}
 
-    @Override
+	@Override
 	public synchronized void startup() {
 		super.startup();
 		// todo: init raft storage
 		// todo: init raft log
 		// todo: init state machine
+		configState.checkAndSetCurrentConfiguration();
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.startup();
 		}
-        // todo: connect to peers
+		// todo: connect to peers
 		state.changeToFollower();
 	}
 
@@ -99,7 +105,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.shutdown();
 		}
-        // todo: check
+		// todo: check
 	}
 
 	@Override

@@ -5,12 +5,21 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public abstract class BaseInfo implements Serializable {
+public abstract class Message implements Serializable {
 
 	String raftGroupId;
 
+	// todo:
 	String requestPeerId;
 
+	// todo
 	String replyPeerId;
+
+	boolean success;
+
+	/**
+	 * only used when success is false
+	 */
+	ErrorInfo errorInfo;
 
 }

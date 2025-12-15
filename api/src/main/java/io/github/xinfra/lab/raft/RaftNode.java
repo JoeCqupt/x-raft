@@ -7,10 +7,12 @@ import io.github.xinfra.lab.raft.log.RaftLog;
 
 public interface RaftNode extends LifeCycle, RaftProtocol, RaftClientProtocol, AdminProtocol {
 
+	String raftGroupId();
+
 	RaftPeerId raftPeerId();
 
 	RaftLog raftLog();
 
-    RaftRole raftRole();
+	RaftRole raftRole();
 
 }
