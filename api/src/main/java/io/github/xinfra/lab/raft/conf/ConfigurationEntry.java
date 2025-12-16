@@ -1,9 +1,10 @@
-package io.github.xinfra.lab.raft.core.conf;
+package io.github.xinfra.lab.raft.conf;
 
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.log.LogEntry;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -43,7 +44,7 @@ public class ConfigurationEntry implements LogEntry {
 	}
 
 	public List<RaftPeerId> getPeers() {
-		List<RaftPeerId> peers = conf.getPeers();
+		List<RaftPeerId> peers = new ArrayList<>(conf.getPeers());
 		if (oldConf != null) {
 			peers.addAll(oldConf.getPeers());
 		}
@@ -51,7 +52,7 @@ public class ConfigurationEntry implements LogEntry {
 	}
 
 	public List<RaftPeerId> getLearners() {
-		List<RaftPeerId> learners = conf.getLearners();
+		List<RaftPeerId> learners = new ArrayList<>(conf.getLearners());
 		if (oldConf != null) {
 			learners.addAll(oldConf.getLearners());
 		}

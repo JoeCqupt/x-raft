@@ -7,6 +7,7 @@ public class Responses {
 	public static VoteResponse voteResponse(String requestPeerId, String replyPeerId, Long term, boolean voteGranted,
 			boolean shouldShutdown) {
 		VoteResponse voteResponse = new VoteResponse();
+		voteResponse.setSuccess(true);
 		voteResponse.setRequestPeerId(requestPeerId);
 		voteResponse.setReplyPeerId(replyPeerId);
 		voteResponse.setTerm(term);

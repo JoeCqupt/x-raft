@@ -3,7 +3,7 @@ package io.github.xinfra.lab.raft.core.state;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
-import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import io.github.xinfra.lab.raft.core.transport.RaftApi;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
@@ -72,9 +71,10 @@ public class CandidateState extends Thread {
 							}
 						}
 					}
+					Thread.sleep(xRaftNode.getRandomElectionTimeoutMills());
 				}
 				catch (Throwable t) {
-					log.error("CandidateState error", t);
+					log.error("ElectionTask run error", t);
 				}
 			}
 		}
@@ -118,8 +118,9 @@ public class CandidateState extends Thread {
 					xRaftNode.shutdown();
 					return false;
 				case TIMEOUT:
-					return false; // retry
-				case NEW_TERM:
+                case FAIL:
+                    return false; // retry
+                case NEW_TERM:
 					xRaftNode.getState().changeToFollower(voteResult.getTerm());
 					return false;
 				case REJECTED:
@@ -155,6 +156,7 @@ public class CandidateState extends Thread {
 			for (RaftPeerId raftPeerId : otherVotingRaftPeerIds) {
 				// build request
 				VoteRequest voteRequest = new VoteRequest();
+				voteRequest.setRaftGroupId(xRaftNode.raftGroupId());
 				voteRequest.setPreVote(preVote);
 				voteRequest.setCandidateId(xRaftNode.raftPeerId().getPeerId());
 				voteRequest.setTerm(electionTerm);
@@ -189,6 +191,9 @@ public class CandidateState extends Thread {
 				VoteResponse voteResponse = null;
 				try {
 					voteResponse = responseFuture.get();
+					if (!voteResponse.isSuccess()){
+						return new VoteResult(electionTerm, Status.FAIL);
+					}
 
 					if (voteResponse.isShouldShutdown()) {
 						return new VoteResult(electionTerm, Status.SHUTDOWN);
@@ -212,8 +217,9 @@ public class CandidateState extends Thread {
 					}
 
 				}
-				catch (ExecutionException e) {
+				catch (Exception e) {
 					log.error("get vote response error", e);
+					return new VoteResult(electionTerm, Status.FAIL);
 				}
 
 				waitNum--;
@@ -236,7 +242,7 @@ public class CandidateState extends Thread {
 
 	enum Status {
 
-		PASSED, REJECTED, TIMEOUT, NEW_TERM, SHUTDOWN, NOT_IN_CONF
+		PASSED, REJECTED, FAIL, TIMEOUT, NEW_TERM, SHUTDOWN, NOT_IN_CONF
 
 	}
 

@@ -8,7 +8,9 @@ import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.RaftServer;
 import io.github.xinfra.lab.raft.RaftServerOptions;
+import io.github.xinfra.lab.raft.conf.Configuration;
 import io.github.xinfra.lab.raft.core.XRaftServer;
+import io.github.xinfra.lab.raft.core.log.MemoryRaftLogType;
 import io.github.xinfra.lab.raft.transport.LocalTransportClient;
 import io.github.xinfra.lab.raft.transport.LocalTransportType;
 import io.github.xinfra.lab.raft.transport.TransportClient;
@@ -86,7 +88,8 @@ public class TestCluster {
 			raftNodeOptions.setRaftPeerId(raftPeerId);
 			raftNodeOptions.setShareTransportClientFlag(true);
 			raftNodeOptions.setShareTransportClient(transportClient);
-			raftNodeOptions.setPeers(raftPeerIds);
+			raftNodeOptions.setInitialConf(new Configuration(raftPeerIds, new ArrayList<>() ));
+			raftNodeOptions.setRaftLogType(MemoryRaftLogType.memory);
 
 			RaftGroupOptions raftGroupOptions = new RaftGroupOptions();
 			raftGroupOptions.setRaftNodeOptions(raftNodeOptions);

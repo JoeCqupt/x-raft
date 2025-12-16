@@ -29,7 +29,7 @@ public class BaseUnitTest {
 				return true;
 			}
 			return false;
-		}, 30, 100);
+		}, 300, 10);
 
 	}
 

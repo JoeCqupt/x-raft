@@ -7,8 +7,8 @@ import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.common.Responses;
-import io.github.xinfra.lab.raft.core.conf.Configuration;
-import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.conf.Configuration;
+import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
 import io.github.xinfra.lab.raft.core.state.RaftNodeState;
 import io.github.xinfra.lab.raft.log.RaftLog;
@@ -59,9 +59,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
 		this.state = new RaftNodeState(this);
 
-		// init raft configuration
-		Configuration conf = new Configuration(raftNodeOptions.getPeers(), raftNodeOptions.getLearners());
-		ConfigurationEntry initialConfiguration = new ConfigurationEntry(conf, null);
+		Configuration initialConf = raftNodeOptions.getInitialConf();
+		ConfigurationEntry initialConfiguration = new ConfigurationEntry(null, initialConf);
 		this.configState = new RaftConfigurationState(initialConfiguration);
 	}
 

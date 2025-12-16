@@ -1,7 +1,7 @@
 package io.github.xinfra.lab.raft.core.state;
 
-import io.github.xinfra.lab.raft.core.conf.Configuration;
-import io.github.xinfra.lab.raft.core.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.conf.Configuration;
+import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 
 import java.util.HashSet;
 import java.util.Set;

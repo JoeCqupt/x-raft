@@ -1,6 +1,7 @@
 package io.github.xinfra.lab.raft.core.conf;
 
 import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import lombok.Data;
 
 import java.util.LinkedList;
