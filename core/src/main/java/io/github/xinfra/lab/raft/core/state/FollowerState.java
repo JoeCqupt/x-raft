@@ -25,7 +25,7 @@ public class FollowerState {
 		this.lastRpcTimeMills = lastRpcTimeMills;
 	}
 
-	public synchronized void startup() {
+	public void startup() {
 		if (running) {
 			return;
 		}
@@ -34,15 +34,13 @@ public class FollowerState {
 		electionTimeoutTask.start();
 	}
 
-	public synchronized void shutdown() {
+	public void shutdown() {
 		if (!running) {
 			return;
 		}
 		running = false;
-		if (electionTimeoutTask != null) {
-			electionTimeoutTask.interrupt();
-			electionTimeoutTask = null; // help gc
-		}
+		electionTimeoutTask.interrupt();
+		electionTimeoutTask = null; // help gc
 	}
 
 	class ElectionTimeoutTask extends Thread {
@@ -57,20 +55,19 @@ public class FollowerState {
 				try {
 					Long electionTimeoutMills = xRaftNode.getRandomElectionTimeoutMills();
 					TimeUnit.MILLISECONDS.sleep(electionTimeoutMills);
-					synchronized (xRaftNode) {
-						if (shouldRun() && timeout(electionTimeoutMills)) {
-							xRaftNode.getState().changeToCandidate();
+					if (shouldRun() && timeout(electionTimeoutMills)) {
+						if (xRaftNode.getState().changeToCandidate()){
 							break;
 						}
 					}
 				}
 				catch (InterruptedException e) {
-					log.info("FollowerState interrupted");
+					log.info("ElectionTimeoutTask thread interrupted");
 					Thread.currentThread().interrupt();
 					break;
 				}
 				catch (Throwable t) {
-					log.error("FollowerState error", t);
+					log.error("ElectionTimeoutTask thread  ex", t);
 				}
 			}
 		}
@@ -80,7 +77,9 @@ public class FollowerState {
 		}
 
 		private boolean shouldRun() {
-			return running && xRaftNode.getState().getRole() == RaftRole.FOLLOWER;
+			return running
+					&& xRaftNode.getState().getRole() == RaftRole.FOLLOWER
+					&& !Thread.currentThread().isInterrupted();
 		}
 
 	}

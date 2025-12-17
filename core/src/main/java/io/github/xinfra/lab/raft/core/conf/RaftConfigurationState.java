@@ -2,15 +2,16 @@ package io.github.xinfra.lab.raft.core.conf;
 
 import io.github.xinfra.lab.raft.RaftPeerId;
 import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.LinkedList;
 
-@Data
+
 public class RaftConfigurationState {
 
 	private ConfigurationEntry initialConfiguration;
 
+	@Getter
 	private ConfigurationEntry currentConfiguration;
 
 	private LinkedList<ConfigurationEntry> configurations = new LinkedList<>();
@@ -18,7 +19,7 @@ public class RaftConfigurationState {
 	public RaftConfigurationState(ConfigurationEntry initialConfiguration) {
 		this.initialConfiguration = initialConfiguration;
 		// set initial configuration as current
-		setCurrentConfiguration(initialConfiguration);
+		this.currentConfiguration = initialConfiguration;
 	}
 
 	public boolean addConfiguration(ConfigurationEntry entry) {
@@ -33,7 +34,7 @@ public class RaftConfigurationState {
 		if (configurations.isEmpty()) {
 			return;
 		}
-		setCurrentConfiguration(configurations.getLast());
+		this.currentConfiguration = (configurations.getLast());
 	}
 
 	public RaftPeerId getRaftPeerId(String peerId) {

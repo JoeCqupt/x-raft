@@ -5,10 +5,15 @@ import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+
+@Slf4j
 public class RaftNodeState {
 
 	@Getter
@@ -33,6 +38,9 @@ public class RaftNodeState {
 
 	private LeaderState leaderState;
 
+	@Getter
+	private final Lock lock = new ReentrantLock();
+
 	public RaftNodeState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
 		this.followerState = new FollowerState(xRaftNode);
@@ -40,38 +48,68 @@ public class RaftNodeState {
 		this.leaderState = new LeaderState(xRaftNode);
 	}
 
-	public synchronized void changeToFollower() {
-		role = RaftRole.FOLLOWER;
-		if (role == RaftRole.CANDIDATE) {
-			candidateState.shutdown();
+	public void changeToFollower() {
+		try {
+			lock.lockInterruptibly();
+			if (role == RaftRole.CANDIDATE) {
+				candidateState.shutdown();
+			}
+			if (role == RaftRole.LEADER) {
+				leaderState.shutdown();
+			}
+			if (role == RaftRole.LEARNER) {
+				// todo
+			}
+			role = RaftRole.FOLLOWER;
+			followerState.startup();
+			log.info("node:{} change to follower", xRaftNode.raftPeerId());
+		} catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+			log.error("interrupted when change to follower", e);
+        } finally {
+			lock.unlock();
 		}
-		if (role == RaftRole.LEADER) {
-			leaderState.shutdown();
-		}
-		if (role == RaftRole.LEARNER) {
-			// todo
-		}
-		followerState.startup();
 	}
 
 	/**
 	 * new term discovered, change to follower
 	 * @param newTerm
 	 */
-	public synchronized void changeToFollower(Long newTerm) {
+	public  void changeToFollower(Long newTerm) {
 		// todo
 	}
 
-	public synchronized void changeToCandidate() {
-		role = RaftRole.CANDIDATE;
-		followerState.shutdown();
-		candidateState.startup();
+	public boolean changeToCandidate() throws InterruptedException {
+		try {
+			lock.lockInterruptibly();
+			if (role != RaftRole.FOLLOWER) {
+				return false;
+			}
+			role = RaftRole.CANDIDATE;
+			followerState.shutdown();
+			candidateState.startup();
+			log.info("node:{} change to candidate", xRaftNode.raftPeerId());
+			return true;
+		}  finally {
+			lock.unlock();
+		}
 	}
 
-	public synchronized void changeToLeader() {
-		role = RaftRole.LEADER;
-		candidateState.shutdown();
-		leaderState.startup();
+	public  boolean changeToLeader() throws InterruptedException {
+		try {
+			lock.lockInterruptibly();
+			if (role != RaftRole.CANDIDATE) {
+				return false;
+			}
+			role = RaftRole.LEADER;
+			candidateState.shutdown();
+			leaderState.startup();
+			log.info("node:{} change to leader", xRaftNode.raftPeerId());
+			return true;
+		} finally {
+			lock.unlock();
+		}
+
 	}
 
 	public void persistMetadata() {
