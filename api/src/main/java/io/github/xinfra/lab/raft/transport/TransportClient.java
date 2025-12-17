@@ -6,12 +6,12 @@ import java.net.SocketAddress;
 
 public interface TransportClient extends LifeCycle {
 
-	void connect(SocketAddress socketAddress);
+	void connect(SocketAddress socketAddress) throws Exception;
 
-	void reconnect(SocketAddress socketAddress);
+	void reconnect(SocketAddress socketAddress) throws Exception;
 
-	void disconnect(SocketAddress socketAddress);
+	void disconnect(SocketAddress socketAddress) throws Exception;
 
-	<T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request, CallOptions callOptions);
+	<T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request, CallOptions callOptions) throws Exception;
 
 }

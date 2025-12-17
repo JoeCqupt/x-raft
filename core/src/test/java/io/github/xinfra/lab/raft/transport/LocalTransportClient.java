@@ -6,10 +6,12 @@ import io.github.xinfra.lab.raft.core.transport.RaftApi;
 import io.github.xinfra.lab.raft.protocol.ErrorInfo;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
+import org.apache.commons.lang3.RandomUtils;
 
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static io.github.xinfra.lab.raft.common.RaftError.NODE_NOT_FOUND;
 
@@ -40,8 +42,12 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 	@Override
 	public <T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request,
-			CallOptions callOptions) {
-		if (requestApi == RaftApi.requestVote) {
+			CallOptions callOptions) throws Exception {
+
+        // random delay
+        TimeUnit.MILLISECONDS.sleep(RandomUtils.nextLong(50, 100));
+
+        if (requestApi == RaftApi.requestVote) {
 			VoteRequest voteRequest = (VoteRequest) request;
 			String requestRaftGroupId = voteRequest.getRaftGroupId();
 			String requestPeerId = voteRequest.getRequestPeerId();
