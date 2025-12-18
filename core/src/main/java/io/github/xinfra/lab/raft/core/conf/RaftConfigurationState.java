@@ -9,17 +9,17 @@ import java.util.LinkedList;
 
 public class RaftConfigurationState {
 
-	private ConfigurationEntry initialConfiguration;
+	private ConfigurationEntry initialConfig;
 
 	@Getter
-	private ConfigurationEntry currentConfiguration;
+	private ConfigurationEntry currentConfig;
 
 	private LinkedList<ConfigurationEntry> configurations = new LinkedList<>();
 
-	public RaftConfigurationState(ConfigurationEntry initialConfiguration) {
-		this.initialConfiguration = initialConfiguration;
+	public RaftConfigurationState(ConfigurationEntry initialConfig) {
+		this.initialConfig = initialConfig;
 		// set initial configuration as current
-		this.currentConfiguration = initialConfiguration;
+		this.currentConfig = initialConfig;
 	}
 
 	public boolean addConfiguration(ConfigurationEntry entry) {
@@ -34,11 +34,11 @@ public class RaftConfigurationState {
 		if (configurations.isEmpty()) {
 			return;
 		}
-		this.currentConfiguration = (configurations.getLast());
+		this.currentConfig = (configurations.getLast());
 	}
 
 	public RaftPeerId getRaftPeerId(String peerId) {
-		return currentConfiguration.getRaftPeerId(peerId);
+		return currentConfig.getRaftPeerId(peerId);
 	}
 
 }

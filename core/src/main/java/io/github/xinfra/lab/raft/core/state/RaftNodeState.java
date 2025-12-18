@@ -16,11 +16,19 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 public class RaftNodeState {
 
+
+	/**
+	 * Guard lock for all state transitions.
+	 */
+	@Getter
+	private final Lock lock = new ReentrantLock();
+
 	@Getter
 	private final AtomicLong currentTerm = new AtomicLong();
 
 	@Getter
 	@Setter
+	// todo: 类型？
 	private volatile AtomicReference<String> votedFor = new AtomicReference<>(null);
 
 	@Setter
@@ -38,8 +46,7 @@ public class RaftNodeState {
 
 	private LeaderState leaderState;
 
-	@Getter
-	private final Lock lock = new ReentrantLock();
+
 
 	public RaftNodeState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
@@ -116,4 +123,21 @@ public class RaftNodeState {
 		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
 	}
 
+	public void startElection(boolean preVote) throws InterruptedException {
+		try {
+			lock.lockInterruptibly();
+			// todo: notify state machine
+			leaderId.getAndSet(null);
+			long electionTerm;
+			if (preVote) {
+				electionTerm = xRaftNode.getState().getCurrentTerm().get();
+			} else {
+				electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
+				xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
+				xRaftNode.getState().persistMetadata();
+			}
+		} finally {
+			lock.unlock();
+		}
+	}
 }

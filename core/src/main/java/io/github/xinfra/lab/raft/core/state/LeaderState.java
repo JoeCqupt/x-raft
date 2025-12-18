@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +42,7 @@ public class LeaderState extends Thread {
 		xRaftNode.raftLog().append(null);
 
 		// init log appenders
-		List<RaftPeerId> otherRaftPeerIds = xRaftNode.getConfigState().getCurrentConfiguration().getPeers();
+		List<RaftPeerId> otherRaftPeerIds = xRaftNode.getConfigState().getCurrentConfig().getPeers();
 		// remove self
 		otherRaftPeerIds.remove(xRaftNode.raftPeerId());
 

@@ -88,6 +88,7 @@ public class CandidateState extends Thread {
                 return false;
             }
 
+
             // todo: notify state machine
             xRaftNode.getState().getLeaderId().getAndSet(null);
             if (preVote) {
@@ -97,7 +98,11 @@ public class CandidateState extends Thread {
                 xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
                 xRaftNode.getState().persistMetadata();
             }
-            configurationEntry = xRaftNode.getConfigState().getCurrentConfiguration();
+            configurationEntry = xRaftNode.getConfigState().getCurrentConfig();
+
+            // todo:
+//            xRaftNode.getState().startElection(preVote);
+
             lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
 
 
