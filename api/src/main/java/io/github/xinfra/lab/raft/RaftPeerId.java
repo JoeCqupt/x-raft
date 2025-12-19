@@ -11,5 +11,4 @@ public class RaftPeerId {
 
 	private InetSocketAddress address;
 
-
 }

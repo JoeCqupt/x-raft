@@ -2,6 +2,8 @@ package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
+import io.github.xinfra.lab.raft.log.RaftLog;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 @Slf4j
@@ -18,10 +21,13 @@ public class RaftNodeState {
 
 
 	/**
-	 * Guard lock for all state transitions.
+	 * guard lock for state transition
 	 */
+	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 	@Getter
-	private final Lock lock = new ReentrantLock();
+	private final Lock writeLock = lock.writeLock();
+	@Getter
+	private final Lock readLock = lock.readLock();
 
 	@Getter
 	private final AtomicLong currentTerm = new AtomicLong();
@@ -46,10 +52,16 @@ public class RaftNodeState {
 
 	private LeaderState leaderState;
 
+	@Getter
+	private RaftLog raftLog;
 
+	@Getter
+	private RaftConfigurationState configState;
 
-	public RaftNodeState(XRaftNode xRaftNode) {
+	public RaftNodeState(XRaftNode xRaftNode, RaftLog raftLog, RaftConfigurationState configState) {
 		this.xRaftNode = xRaftNode;
+		this.raftLog = raftLog;
+		this.configState = configState;
 		this.followerState = new FollowerState(xRaftNode);
 		this.candidateState = new CandidateState(xRaftNode);
 		this.leaderState = new LeaderState(xRaftNode);
@@ -57,7 +69,7 @@ public class RaftNodeState {
 
 	public void changeToFollower() {
 		try {
-			lock.lockInterruptibly();
+			writeLock.lockInterruptibly();
 			if (role == RaftRole.CANDIDATE) {
 				candidateState.shutdown();
 			}
@@ -74,7 +86,7 @@ public class RaftNodeState {
             Thread.currentThread().interrupt();
 			log.error("interrupted when change to follower", e);
         } finally {
-			lock.unlock();
+			writeLock.unlock();
 		}
 	}
 
@@ -88,7 +100,7 @@ public class RaftNodeState {
 
 	public boolean changeToCandidate() throws InterruptedException {
 		try {
-			lock.lockInterruptibly();
+			writeLock.lockInterruptibly();
 			if (role != RaftRole.FOLLOWER) {
 				return false;
 			}
@@ -98,7 +110,7 @@ public class RaftNodeState {
 			log.info("node:{} change to candidate", xRaftNode.raftPeerId());
 			return true;
 		}  finally {
-			lock.unlock();
+			writeLock.unlock();
 		}
 	}
 
@@ -139,5 +151,13 @@ public class RaftNodeState {
 		} finally {
 			lock.unlock();
 		}
+	}
+
+	public void updateConfiguration() {
+		configState.updateConfiguration();
+	}
+
+	public void resetLeaderId(String peerId) {
+		// todo implement
 	}
 }

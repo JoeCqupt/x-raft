@@ -22,8 +22,6 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 @Slf4j
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
@@ -34,13 +32,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private RaftNodeOptions raftNodeOptions;
 
-	private RaftLog raftLog;
-
 	@Getter
 	private RaftNodeState state;
-
-	@Getter
-	private RaftConfigurationState configState;
 
 	@Getter
 	private TransportClient transportClient;
@@ -56,12 +49,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 			this.transportClient = raftNodeOptions.getTransportType()
 				.newClient(raftNodeOptions.getTransportClientOptions());
 		}
-		this.raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
-		this.state = new RaftNodeState(this);
+		RaftLog raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
 
 		Configuration initialConf = raftNodeOptions.getInitialConf();
 		ConfigurationEntry initialConfiguration = new ConfigurationEntry(null, initialConf);
-		this.configState = new RaftConfigurationState(initialConfiguration);
+		RaftConfigurationState configState = new RaftConfigurationState(initialConfiguration);
+		this.state = new RaftNodeState(this, raftLog, configState);
 	}
 
 	@Override
@@ -75,11 +68,6 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public RaftLog raftLog() {
-		return raftLog;
-	}
-
-	@Override
 	public RaftRole raftRole() {
 		return state.getRole();
 	}
@@ -90,7 +78,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		// todo: init raft storage
 		// todo: init raft log
 		// todo: init state machine
-		configState.checkAndSetCurrentConfiguration();
+		state.updateConfiguration();
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.startup();
 		}
@@ -132,12 +120,6 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	public SetConfigurationResponse setRaftConfiguration(SetConfigurationRequest request) {
 		// todo
 		return null;
-	}
-
-	public Long getRandomElectionTimeoutMills() {
-		Long timeoutMills = raftNodeOptions.getElectionTimeoutMills();
-		Long delayMills = raftNodeOptions.getElectionTimeoutDelayMills();
-		return ThreadLocalRandom.current().nextLong(timeoutMills, timeoutMills + delayMills);
 	}
 
 }

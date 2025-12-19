@@ -9,6 +9,7 @@ import lombok.Data;
 import org.apache.commons.lang3.Validate;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Data
 public class RaftNodeOptions {
@@ -36,5 +37,9 @@ public class RaftNodeOptions {
 	private Long electionTimeoutDelayMills = 150L;
 
 	private Long rpcTimeoutMills = 100L;
+
+	public Long getRandomElectionTimeoutMills() {
+		return ThreadLocalRandom.current().nextLong(electionTimeoutMills, electionTimeoutMills + electionTimeoutDelayMills);
+	}
 
 }

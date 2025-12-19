@@ -30,7 +30,7 @@ public class RaftConfigurationState {
 	/**
 	 * check if there is any new configuration and set it as current
 	 */
-	public void checkAndSetCurrentConfiguration() {
+	public void updateConfiguration() {
 		if (configurations.isEmpty()) {
 			return;
 		}
