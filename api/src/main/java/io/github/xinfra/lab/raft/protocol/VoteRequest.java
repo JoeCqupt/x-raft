@@ -1,13 +1,14 @@
 package io.github.xinfra.lab.raft.protocol;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
 
-@Getter
-@Setter
-public class VoteRequest extends Message implements Serializable {
+@Data
+public class VoteRequest extends RequestMessage implements Serializable {
+
 
 	private boolean preVote;
 

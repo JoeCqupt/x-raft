@@ -2,6 +2,7 @@ package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
+import io.github.xinfra.lab.raft.core.annotation.GuardByLock;
 import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
 import io.github.xinfra.lab.raft.log.RaftLog;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
@@ -9,8 +10,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -29,34 +28,47 @@ public class RaftNodeState {
 	@Getter
 	private final Lock readLock = lock.readLock();
 
+	@GuardByLock
 	@Getter
-	private final AtomicLong currentTerm = new AtomicLong();
+	private final Long currentTerm = 0L;
 
+	@GuardByLock
 	@Getter
 	@Setter
-	// todo: 类型？
-	private volatile AtomicReference<String> votedFor = new AtomicReference<>(null);
+	private volatile String votedFor ;
 
+	@GuardByLock
 	@Setter
 	@Getter
-	private volatile AtomicReference<String> leaderId = new AtomicReference<>(null);
+	private volatile String leaderId;
 
+	@GuardByLock
 	@Getter
 	private volatile RaftRole role;
 
 	private final XRaftNode xRaftNode;
 
+	@GuardByLock
 	private FollowerState followerState;
 
+	@GuardByLock
 	private CandidateState candidateState;
 
+	@GuardByLock
 	private LeaderState leaderState;
 
+	@GuardByLock
 	@Getter
 	private RaftLog raftLog;
 
+	@GuardByLock
 	@Getter
 	private RaftConfigurationState configState;
+
+	@GuardByLock
+	@Getter
+	private volatile Long lastLeaderRpcTimeMills = System.currentTimeMillis();
+
 
 	public RaftNodeState(XRaftNode xRaftNode, RaftLog raftLog, RaftConfigurationState configState) {
 		this.xRaftNode = xRaftNode;
@@ -68,8 +80,6 @@ public class RaftNodeState {
 	}
 
 	public void changeToFollower() {
-		try {
-			writeLock.lockInterruptibly();
 			if (role == RaftRole.CANDIDATE) {
 				candidateState.shutdown();
 			}
@@ -81,13 +91,7 @@ public class RaftNodeState {
 			}
 			role = RaftRole.FOLLOWER;
 			followerState.startup();
-			log.info("node:{} change to follower", xRaftNode.raftPeerId());
-		} catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-			log.error("interrupted when change to follower", e);
-        } finally {
-			writeLock.unlock();
-		}
+			log.info("node:{} change to follower", xRaftNode.getRaftPeer());
 	}
 
 	/**
@@ -98,59 +102,22 @@ public class RaftNodeState {
 		// todo
 	}
 
-	public boolean changeToCandidate() throws InterruptedException {
-		try {
-			writeLock.lockInterruptibly();
-			if (role != RaftRole.FOLLOWER) {
-				return false;
-			}
+	public void changeToCandidate() throws InterruptedException {
 			role = RaftRole.CANDIDATE;
 			followerState.shutdown();
 			candidateState.startup();
-			log.info("node:{} change to candidate", xRaftNode.raftPeerId());
-			return true;
-		}  finally {
-			writeLock.unlock();
-		}
+			log.info("node:{} change to candidate", xRaftNode.getRaftPeer());
 	}
 
-	public  boolean changeToLeader() throws InterruptedException {
-		try {
-			lock.lockInterruptibly();
-			if (role != RaftRole.CANDIDATE) {
-				return false;
-			}
+	public  void changeToLeader() throws InterruptedException {
 			role = RaftRole.LEADER;
 			candidateState.shutdown();
 			leaderState.startup();
-			log.info("node:{} change to leader", xRaftNode.raftPeerId());
-			return true;
-		} finally {
-			lock.unlock();
-		}
-
+			log.info("node:{} change to leader", xRaftNode.getRaftPeer());
 	}
 
 	public void persistMetadata() {
-		xRaftNode.raftLog().persistMetadata(new RaftMetadata(currentTerm.get(), votedFor.get()));
-	}
-
-	public void startElection(boolean preVote) throws InterruptedException {
-		try {
-			lock.lockInterruptibly();
-			// todo: notify state machine
-			leaderId.getAndSet(null);
-			long electionTerm;
-			if (preVote) {
-				electionTerm = xRaftNode.getState().getCurrentTerm().get();
-			} else {
-				electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
-				xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.raftPeerId().getPeerId());
-				xRaftNode.getState().persistMetadata();
-			}
-		} finally {
-			lock.unlock();
-		}
+		raftLog.persistMetadata(new RaftMetadata(currentTerm, votedFor));
 	}
 
 	public void updateConfiguration() {

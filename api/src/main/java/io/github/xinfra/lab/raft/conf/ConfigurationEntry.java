@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.conf;
 
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.log.LogEntry;
 import lombok.Data;
 
@@ -43,16 +43,16 @@ public class ConfigurationEntry implements LogEntry {
 		return logEntryTerm;
 	}
 
-	public List<RaftPeerId> getPeers() {
-		List<RaftPeerId> peers = new ArrayList<>(conf.getPeers());
+	public List<RaftPeer> getPeers() {
+		List<RaftPeer> peers = new ArrayList<>(conf.getPeers());
 		if (oldConf != null) {
 			peers.addAll(oldConf.getPeers());
 		}
 		return peers;
 	}
 
-	public List<RaftPeerId> getLearners() {
-		List<RaftPeerId> learners = new ArrayList<>(conf.getLearners());
+	public List<RaftPeer> getLearners() {
+		List<RaftPeer> learners = new ArrayList<>(conf.getLearners());
 		if (oldConf != null) {
 			learners.addAll(oldConf.getLearners());
 		}
@@ -60,13 +60,13 @@ public class ConfigurationEntry implements LogEntry {
 	}
 
 	// todo
-	public RaftPeerId getRaftPeerId(String peerId) {
-		RaftPeerId peer = conf.getPeers().stream().filter(p -> p.getPeerId().equals(peerId)).findFirst().get();
+	public RaftPeer getRaftPeer(String peerId) {
+		RaftPeer peer = conf.getPeers().stream().filter(p -> p.getRaftPeerId().equals(peerId)).findFirst().get();
 		if (peer != null) {
 			return peer;
 		}
 		if (oldConf != null) {
-			peer = oldConf.getPeers().stream().filter(p -> p.getPeerId().equals(peerId)).findFirst().get();
+			peer = oldConf.getPeers().stream().filter(p -> p.getRaftPeerId().equals(peerId)).findFirst().get();
 		}
 		return peer;
 	}

@@ -8,7 +8,7 @@ public class Responses {
 			boolean shouldShutdown) {
 		VoteResponse voteResponse = new VoteResponse();
 		voteResponse.setSuccess(true);
-		voteResponse.setRequestPeerId(requestPeerId);
+		voteResponse.setPeerId(requestPeerId);
 		voteResponse.setReplyPeerId(replyPeerId);
 		voteResponse.setTerm(term);
 		voteResponse.setVoteGranted(voteGranted);

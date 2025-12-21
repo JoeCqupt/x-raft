@@ -21,6 +21,11 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 	private List<RaftNode> raftNodes;
 
+	public void setRaftNodes(List<RaftNode> raftNodes) {
+		this.raftNodes = raftNodes;
+	}
+
+
 	public LocalTransportClient(TransportClientOptions transportClientOptions) {
 		this.transportClientOptions = transportClientOptions;
 	}
@@ -41,6 +46,15 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	}
 
 	@Override
+	public <T, R> void asyncCall(RequestApi requestApi,
+								 T request,
+								 SocketAddress socketAddress,
+								 CallOptions callOptions,
+								 ResponseCallBack<R> callBack) throws Exception {
+
+	}
+
+
 	public <T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request,
 			CallOptions callOptions) throws Exception {
 
@@ -50,13 +64,13 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
         if (requestApi == RaftApi.requestVote) {
 			VoteRequest voteRequest = (VoteRequest) request;
 			String requestRaftGroupId = voteRequest.getRaftGroupId();
-			String requestPeerId = voteRequest.getRequestPeerId();
+			String requestPeerId = voteRequest.getPeerId();
 			Optional<RaftNode> raftOpt = raftNodes.stream()
-				.filter(raftNode -> raftNode.raftGroupId().equals(requestRaftGroupId)
-						&& raftNode.raftPeerId().getPeerId().equals(requestPeerId))
+				.filter(raftNode -> raftNode.getRaftGroupId().equals(requestRaftGroupId)
+						&& raftNode.getRaftPeer().getRaftPeerId().equals(requestPeerId))
 				.findFirst();
 			if (raftOpt.isPresent()) {
-				return (R) raftOpt.get().requestVote(voteRequest);
+				return (R) raftOpt.get().handleVoteRequest(voteRequest);
 			}
 			else {
 				// todo:
@@ -72,8 +86,5 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 		return null;
 	}
 
-	public void setRaftNodes(List<RaftNode> raftNodes) {
-		this.raftNodes = raftNodes;
-	}
 
 }

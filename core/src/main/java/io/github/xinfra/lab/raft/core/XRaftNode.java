@@ -4,7 +4,7 @@ import com.google.common.base.Verify;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeOptions;
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.common.Responses;
 import io.github.xinfra.lab.raft.conf.Configuration;
@@ -27,7 +27,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	private String raftGroupId;
 
-	private RaftPeerId raftPeerId;
+	private RaftPeer raftPeer;
 
 	@Getter
 	private RaftNodeOptions raftNodeOptions;
@@ -40,7 +40,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	public XRaftNode(String raftGroupId, RaftNodeOptions raftNodeOptions) {
 		this.raftGroupId = raftGroupId;
-		this.raftPeerId = raftNodeOptions.getRaftPeerId();
+		this.raftPeer = raftNodeOptions.getRaftPeer();
 		this.raftNodeOptions = raftNodeOptions;
 		if (raftNodeOptions.isShareTransportClientFlag()) {
 			this.transportClient = raftNodeOptions.getShareTransportClient();
@@ -58,22 +58,31 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public String raftGroupId() {
+	public String getRaftGroupId() {
 		return raftGroupId;
 	}
 
 	@Override
-	public RaftPeerId raftPeerId() {
-		return raftPeerId;
+	public String getRaftPeerId() {
+		return raftPeer.getRaftPeerId();
 	}
 
 	@Override
-	public RaftRole raftRole() {
+	public String getRaftGroupPeerId() {
+		return  String.format("[%s]-[%s]", raftGroupId, getRaftPeerId());
+	}
+
+	public RaftPeer getRaftPeer() {
+		return raftPeer;
+	}
+
+	@Override
+	public RaftRole getRaftRole() {
 		return state.getRole();
 	}
 
 	@Override
-	public synchronized void startup() {
+	public void startup() {
 		super.startup();
 		// todo: init raft storage
 		// todo: init raft log
@@ -83,11 +92,16 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 			transportClient.startup();
 		}
 		// todo: connect to peers
-		state.changeToFollower();
+		try {
+			state.getWriteLock().lock();
+			state.changeToFollower();
+		}finally {
+			state.getWriteLock().unlock();
+		}
 	}
 
 	@Override
-	public synchronized void shutdown() {
+	public void shutdown() {
 		super.shutdown();
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.shutdown();
@@ -96,7 +110,13 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	}
 
 	@Override
-	public VoteResponse requestVote(VoteRequest voteRequest) {
+	public VoteResponse handlePreVoteRequest(VoteRequest voteRequest) {
+		// todo
+		return null;
+	}
+
+	@Override
+	public VoteResponse handleVoteRequest(VoteRequest voteRequest) {
 		Verify.verify(isStarted(), "RaftNode is not started yet.");
 		// todo verify raft group
 
@@ -105,12 +125,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		// todo
 		boolean shouldShutdown = false;
 
-		return Responses.voteResponse(voteRequest.getRequestPeerId(), voteRequest.getReplyPeerId(),
+		return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
 				state.getCurrentTerm().get(), voteGranted, shouldShutdown);
 	}
 
 	@Override
-	public AppendEntriesResponse appendEntries(AppendEntriesRequest appendEntriesRequest) {
+	public AppendEntriesResponse handleAppendEntries(AppendEntriesRequest appendEntriesRequest) {
 
 		// todo
 		return null;

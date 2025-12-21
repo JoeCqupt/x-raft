@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.core;
 
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -23,7 +23,7 @@ public class VoteContext {
 	public boolean decideVote() {
 		String candidateId = voteRequest.getCandidateId();
 		// check candidate peer
-		RaftPeerId candidate = raftNode.getConfigState().getCurrentConfig().getRaftPeerId(candidateId);
+		RaftPeer candidate = raftNode.getConfigState().getCurrentConfig().getRaftPeerId(candidateId);
 		if (candidate == null) {
 			log.info("reject candidateId:{} not found.", candidateId);
 			return false;

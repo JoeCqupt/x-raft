@@ -23,7 +23,7 @@ public class BaseUnitTest {
 	public void testLeaderElection() throws InterruptedException, TimeoutException {
 
 		Wait.untilIsTrue(() -> {
-			RaftPeerId leader = cluster.getLeaderPeer();
+			RaftPeer leader = cluster.getLeaderPeer();
 			if (leader != null) {
 				log.info("cluster:{}", cluster.printRaftNodes());
 				return true;

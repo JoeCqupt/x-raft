@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.core.state;
 
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
@@ -14,7 +14,7 @@ public class LogReplicator extends Thread {
 
 	private volatile boolean running = true;
 
-	private final RaftPeerId raftPeerId;
+	private final RaftPeer raftPeer;
 
 	private final XRaftNode xRaftNode;
 
@@ -27,8 +27,8 @@ public class LogReplicator extends Thread {
 
 	private Long lastAppendSendTime;
 
-	public LogReplicator(RaftPeerId raftPeerId, XRaftNode xRaftNode) {
-		this.raftPeerId = raftPeerId;
+	public LogReplicator(RaftPeer raftPeer, XRaftNode xRaftNode) {
+		this.raftPeer = raftPeer;
 		this.xRaftNode = xRaftNode;
 		this.nextIndex = xRaftNode.raftLog().getNextIndex();
 	}

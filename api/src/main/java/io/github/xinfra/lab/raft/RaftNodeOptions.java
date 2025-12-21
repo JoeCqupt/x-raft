@@ -6,15 +6,13 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import io.github.xinfra.lab.raft.transport.TransportClientOptions;
 import io.github.xinfra.lab.raft.transport.TransportType;
 import lombok.Data;
-import org.apache.commons.lang3.Validate;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Data
 public class RaftNodeOptions {
 
-	RaftPeerId raftPeerId;
+	RaftPeer raftPeer;
 
 	private boolean shareTransportClientFlag = false;
 

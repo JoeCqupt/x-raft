@@ -4,7 +4,7 @@ import io.github.xinfra.lab.raft.transport.RequestApi;
 
 public enum RaftApi implements RequestApi {
 
-	requestVote("/raft/requestVote"), appendEntries("/raft/appendEntries");
+	requestVote("/raft/handleVoteRequest"), appendEntries("/raft/handleAppendEntries");
 
 	private String path;
 

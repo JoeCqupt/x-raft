@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.core.conf;
 
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import lombok.Getter;
 
@@ -37,8 +37,8 @@ public class RaftConfigurationState {
 		this.currentConfig = (configurations.getLast());
 	}
 
-	public RaftPeerId getRaftPeerId(String peerId) {
-		return currentConfig.getRaftPeerId(peerId);
+	public RaftPeer getRaftPeerId(String peerId) {
+		return currentConfig.getRaftPeer(peerId);
 	}
 
 }

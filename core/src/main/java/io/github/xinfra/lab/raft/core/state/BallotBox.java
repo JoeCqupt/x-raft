@@ -19,10 +19,12 @@ public class BallotBox {
 	}
 
 	public void grantVote(String peerId) {
+		// fixme
 		votedPeerIds.add(peerId);
 	}
 
 	public void rejectVote(String peerId) {
+		// fixme
 		rejectedPeerIds.add(peerId);
 	}
 

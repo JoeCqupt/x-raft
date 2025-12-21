@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.core.state;
 
-import io.github.xinfra.lab.raft.RaftPeerId;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import org.slf4j.Logger;
@@ -35,19 +35,19 @@ public class LeaderState extends Thread {
 		if (running) {
 			return;
 		}
-		// set leader id to raftPeerId id
-		xRaftNode.getState().getLeaderId().set(xRaftNode.raftPeerId().getPeerId());
+		// set leader id to getRaftPeer id
+		xRaftNode.getState().getLeaderId().set(xRaftNode.getRaftPeer().getRaftPeerId());
 		// append an entry to log when leader startup
 		// todo: append a no-op entry or configuration entry
 		xRaftNode.raftLog().append(null);
 
 		// init log appenders
-		List<RaftPeerId> otherRaftPeerIds = xRaftNode.getConfigState().getCurrentConfig().getPeers();
+		List<RaftPeer> otherRaftPeers = xRaftNode.getConfigState().getCurrentConfig().getPeers();
 		// remove self
-		otherRaftPeerIds.remove(xRaftNode.raftPeerId());
+		otherRaftPeers.remove(xRaftNode.getRaftPeer());
 
-		for (RaftPeerId raftPeerId : otherRaftPeerIds) {
-			logReplicators.add(new LogReplicator(raftPeerId, xRaftNode));
+		for (RaftPeer raftPeer : otherRaftPeers) {
+			logReplicators.add(new LogReplicator(raftPeer, xRaftNode));
 		}
 		// start log appenders
 		for (LogReplicator logReplicator : logReplicators) {
