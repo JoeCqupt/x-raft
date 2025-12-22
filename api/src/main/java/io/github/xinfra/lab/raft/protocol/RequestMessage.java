@@ -12,9 +12,9 @@ public class RequestMessage implements Serializable {
      */
     String raftGroupId;
 
-//    /**
-//     * request target raft peer id
-//     */
-//    String raftPeerId;
+    /**
+     * request target raft peer id
+     */
+    String raftPeerId;
 
 }

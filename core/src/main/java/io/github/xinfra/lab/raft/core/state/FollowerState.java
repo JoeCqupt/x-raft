@@ -189,7 +189,7 @@ public class FollowerState {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        public void onException(Throwable throwable) {
             log.warn("node:{} PreVoteResponseCallBack error:{}", raftPeer, throwable);
         }
     }

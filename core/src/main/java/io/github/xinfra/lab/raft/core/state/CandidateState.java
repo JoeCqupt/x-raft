@@ -85,7 +85,12 @@ public class CandidateState extends Thread {
             }
         }
 
+        private boolean shouldRun() {
+            return running && !Thread.currentThread().isInterrupted();
+        }
+
     }
+
     private void vote() throws Exception {
         log.info("node:{} ask for votes", xRaftNode.getRaftPeer());
         // todo: notify state machine
@@ -186,7 +191,7 @@ public class CandidateState extends Thread {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        public void onException(Throwable throwable) {
             log.error("node:{} VoteResponseCallBack error", raftPeer.getRaftPeerId(), throwable);
         }
     }

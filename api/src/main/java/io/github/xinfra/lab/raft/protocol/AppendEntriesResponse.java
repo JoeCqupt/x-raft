@@ -7,10 +7,8 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class AppendEntriesResponse extends Message implements Serializable {
+public class AppendEntriesResponse extends ResponseMessage implements Serializable {
 
 	private Long term;
-
-	private Boolean success;
 
 }

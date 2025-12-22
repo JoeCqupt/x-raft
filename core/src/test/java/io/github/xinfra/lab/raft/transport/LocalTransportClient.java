@@ -2,24 +2,33 @@ package io.github.xinfra.lab.raft.transport;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
-import io.github.xinfra.lab.raft.core.transport.RaftApi;
+import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.protocol.ErrorInfo;
+import io.github.xinfra.lab.raft.protocol.RequestMessage;
+import io.github.xinfra.lab.raft.protocol.ResponseMessage;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static io.github.xinfra.lab.raft.common.RaftError.NODE_NOT_FOUND;
+import static io.github.xinfra.lab.raft.core.transport.RaftApi.appendEntries;
+import static io.github.xinfra.lab.raft.core.transport.RaftApi.requestVote;
+
 
 public class LocalTransportClient extends AbstractLifeCycle implements TransportClient {
 
 	private TransportClientOptions transportClientOptions;
 
 	private List<RaftNode> raftNodes;
+
+	ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 
 	public void setRaftNodes(List<RaftNode> raftNodes) {
 		this.raftNodes = raftNodes;
@@ -28,6 +37,12 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 	public LocalTransportClient(TransportClientOptions transportClientOptions) {
 		this.transportClientOptions = transportClientOptions;
+	}
+
+	@Override
+	public void shutdown() {
+		super.shutdown();
+		executor.shutdown();
 	}
 
 	@Override
@@ -51,40 +66,61 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 								 SocketAddress socketAddress,
 								 CallOptions callOptions,
 								 ResponseCallBack<R> callBack) throws Exception {
+		// timeout task
+		ScheduledFuture<?> timeout = executor.schedule(() -> {
+			callBack.onException(new Exception("timeout"));
+		}, callOptions.getTimeoutMs(), TimeUnit.MILLISECONDS);
+		try {
+			// random delay
+			TimeUnit.MILLISECONDS.sleep(RandomUtils.nextLong(50, 80));
 
-	}
-
-
-	public <T, R> R blockingCall(RequestApi requestApi, SocketAddress socketAddress, T request,
-			CallOptions callOptions) throws Exception {
-
-        // random delay
-        TimeUnit.MILLISECONDS.sleep(RandomUtils.nextLong(50, 100));
-
-        if (requestApi == RaftApi.requestVote) {
-			VoteRequest voteRequest = (VoteRequest) request;
-			String requestRaftGroupId = voteRequest.getRaftGroupId();
-			String requestPeerId = voteRequest.getPeerId();
-			Optional<RaftNode> raftOpt = raftNodes.stream()
-				.filter(raftNode -> raftNode.getRaftGroupId().equals(requestRaftGroupId)
-						&& raftNode.getRaftPeer().getRaftPeerId().equals(requestPeerId))
-				.findFirst();
-			if (raftOpt.isPresent()) {
-				return (R) raftOpt.get().handleVoteRequest(voteRequest);
+			RequestMessage requestMessage = (RequestMessage) request;
+			String requestRaftGroupId = requestMessage.getRaftGroupId();
+			String requestPeerId = requestMessage.getRaftPeerId();
+			RaftNode raftNode = raftNodes.stream()
+					.filter( node-> node.getRaftGroupId().equals(requestRaftGroupId)
+							&& node.getRaftPeer().getRaftPeerId().equals(requestPeerId))
+					.findFirst().get();
+			if (raftNode == null) {
+				ResponseMessage responseMessage = createResponse(requestApi);
+				responseMessage.setSuccess(false);
+				responseMessage.setErrorInfo(
+						new ErrorInfo(NODE_NOT_FOUND.getCode(),
+								"node not found:" +
+										String.format("[%s]-[%ss]",
+												requestRaftGroupId, requestPeerId)
+						));
+				timeout.cancel(true);
+				callBack.onResponse((R) responseMessage);
+				return;
 			}
-			else {
-				// todo:
-				VoteResponse voteResponse = new VoteResponse();
-				voteResponse.setSuccess(false);
-				voteResponse.setErrorInfo(new ErrorInfo(NODE_NOT_FOUND.getCode(),
-						"node not found:" + requestRaftGroupId + "@" + requestPeerId));
-				return (R) voteResponse;
 
-			}
+			if (requestApi == requestVote) {
+				VoteRequest voteRequest = (VoteRequest) request;
+                VoteResponse voteResponse;
+                if (voteRequest.isPreVote()) {
+                    voteResponse = raftNode.handlePreVoteRequest(voteRequest);
+                } else {
+                    voteResponse = raftNode.handleVoteRequest(voteRequest);
+                }
+				timeout.cancel(true);
+                callBack.onResponse((R) voteResponse);
+            }
+			throw new IllegalStateException("not support api: " + requestApi);
+		} catch (Exception e) {
+			timeout.cancel(true);
+			callBack.onException(e);
 		}
-		// todo:
-		return null;
 	}
+
+	public ResponseMessage createResponse(RequestApi requestApi){
+        if (requestApi.equals(requestVote)) {
+            return new VoteResponse();
+        }else if (requestApi.equals(appendEntries)) {
+            return new AppendEntriesResponse();
+        }
+        throw new IllegalStateException("not support api: " + requestApi);
+    }
 
 
 }

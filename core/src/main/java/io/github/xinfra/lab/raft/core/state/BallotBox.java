@@ -12,8 +12,6 @@ public class BallotBox {
 
 	Set<String> votedPeerIds = new HashSet<>();
 
-	Set<String> rejectedPeerIds = new HashSet<>();
-
 	public BallotBox(ConfigurationEntry configurationEntry) {
 		this.configurationEntry = configurationEntry;
 	}
@@ -23,21 +21,12 @@ public class BallotBox {
 		votedPeerIds.add(peerId);
 	}
 
-	public void rejectVote(String peerId) {
-		// fixme
-		rejectedPeerIds.add(peerId);
-	}
+
 
 	public boolean isMajorityGranted() {
 		return hasVotingPeersMajority(configurationEntry.getConf(), votedPeerIds)
 				&& (configurationEntry.getOldConf() == null
 						|| hasVotingPeersMajority(configurationEntry.getOldConf(), votedPeerIds));
-	}
-
-	public boolean isMajorityRejected() {
-		return hasVotingPeersMajority(configurationEntry.getConf(), rejectedPeerIds)
-				&& (configurationEntry.getOldConf() == null
-						|| hasVotingPeersMajority(configurationEntry.getOldConf(), rejectedPeerIds));
 	}
 
 	public boolean hasVotingPeersMajority(Configuration conf, Set<String> peerIds) {
