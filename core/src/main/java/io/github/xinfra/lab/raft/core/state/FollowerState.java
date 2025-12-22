@@ -67,19 +67,17 @@ public class FollowerState {
                             break;
                         }
                         if (timeout(electionTimeoutMills)) {
-                            // start pre-vote
-                            xRaftNode.getState().resetLeaderId(null);
                             preVote();
                         }
                     } finally {
                         xRaftNode.getState().getWriteLock().unlock();
                     }
                 } catch (InterruptedException e) {
-                    log.info("ElectionTimeoutTask thread interrupted");
+                    log.info("ElectionTimeoutThread interrupted");
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Throwable t) {
-                    log.error("ElectionTimeoutTask thread  ex", t);
+                    log.error("ElectionTimeoutThread ex", t);
                 }
             }
         }
@@ -97,6 +95,9 @@ public class FollowerState {
 
     private void preVote() throws Exception {
         log.info("node:{} start preVote", xRaftNode.getRaftGroupPeerId());
+        // reset leader
+        xRaftNode.getState().resetLeaderId(null);
+
         long term = xRaftNode.getState().getCurrentTerm();
         TermIndex lastLogIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
         ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
@@ -104,7 +105,7 @@ public class FollowerState {
 
         CallOptions callOptions = new CallOptions();
         callOptions.setTimeoutMs(xRaftNode.getRaftNodeOptions().getElectionTimeoutMills());
-        PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(preVoteBallotBox, );
+        PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(preVoteBallotBox);
         for (RaftPeer raftPeer : config.getPeers()) {
             if (xRaftNode.getRaftPeer().equals(raftPeer)) {
                 continue;
@@ -131,19 +132,25 @@ public class FollowerState {
         }
     }
 
-     class PreVoteResponseCallBack implements ResponseCallBack<VoteResponse> {
+    class PreVoteResponseCallBack implements ResponseCallBack<VoteResponse> {
         private final BallotBox ballotBox;
+
         public PreVoteResponseCallBack(BallotBox ballotBox) {
             this.ballotBox = ballotBox;
         }
 
         @Override
         public void onResponse(VoteResponse response) {
-            if(ballotBox != preVoteBallotBox){
-                log.warn("PreVoteResponseCallBack is outdated");
-            }
+            try {
+                xRaftNode.getState().getWriteLock().lock();
+                if (ballotBox != preVoteBallotBox) {
+                    log.warn("PreVoteResponseCallBack is outdated");
+                }
+                // todo
 
-            // todo
+            } finally {
+                xRaftNode.getState().getWriteLock().unlock();
+            }
         }
 
         @Override
