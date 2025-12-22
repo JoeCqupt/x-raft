@@ -36,7 +36,7 @@ public class LeaderState extends Thread {
 			return;
 		}
 		// set leader id to getRaftPeer id
-		xRaftNode.getState().getLeaderId().set(xRaftNode.getRaftPeer().getRaftPeerId());
+		xRaftNode.getState().resetLeaderId(xRaftNode.getRaftPeer().getRaftPeerId());
 		// append an entry to log when leader startup
 		// todo: append a no-op entry or configuration entry
 		xRaftNode.raftLog().append(null);

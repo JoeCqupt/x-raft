@@ -152,6 +152,10 @@ public class FollowerState {
 
         @Override
         public void onResponse(VoteResponse response) {
+            if (!response.isSuccess()) {
+                log.warn("node:{} PreVoteResponseCallBack response fail:{}", raftPeer, response);
+                return;
+            }
             try {
                 xRaftNode.getState().getWriteLock().lock();
                 if (xRaftNode.getState().getRole() != RaftRole.FOLLOWER) {
@@ -166,12 +170,8 @@ public class FollowerState {
                     log.warn("node:{} PreVoteResponseCallBack is outdated", raftPeer);
                     return;
                 }
-                if (!response.isSuccess()) {
-                    log.warn("node:{} PreVoteResponseCallBack response fail:{}", raftPeer, response);
-                    return;
-                }
                 if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
-                    log.warn("node:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response);
+                    log.warn("node:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
                     xRaftNode.getState().changeToFollower(response.getTerm());
                     return;
                 }
