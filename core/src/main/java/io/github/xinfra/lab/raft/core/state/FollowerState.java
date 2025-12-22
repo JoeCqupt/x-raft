@@ -94,18 +94,24 @@ public class FollowerState {
 
 
     private void preVote() throws Exception {
+
+
         log.info("node:{} start preVote", xRaftNode.getRaftGroupPeerId());
         // reset leader
         xRaftNode.getState().resetLeaderId(null);
 
+        ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
+        if (config.getRaftPeer(xRaftNode.getRaftPeer().getRaftPeerId()) == null) {
+            log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeer().getRaftPeerId());
+            return;
+        }
+
         long term = xRaftNode.getState().getCurrentTerm();
         TermIndex lastLogIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
-        ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
         preVoteBallotBox = new BallotBox(config);
 
         CallOptions callOptions = new CallOptions();
         callOptions.setTimeoutMs(xRaftNode.getRaftNodeOptions().getElectionTimeoutMills());
-        PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(preVoteBallotBox);
         for (RaftPeer raftPeer : config.getPeers()) {
             if (xRaftNode.getRaftPeer().equals(raftPeer)) {
                 continue;
@@ -118,6 +124,7 @@ public class FollowerState {
             voteRequest.setLastLogIndex(lastLogIndex.getIndex());
             voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
+            PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(term, raftPeer, preVoteBallotBox);
             xRaftNode.getTransportClient().asyncCall(RaftApi.requestVote,
                     voteRequest,
                     raftPeer.getAddress(),
@@ -133,9 +140,13 @@ public class FollowerState {
     }
 
     class PreVoteResponseCallBack implements ResponseCallBack<VoteResponse> {
+        private final long term;
+        private final RaftPeer raftPeer;
         private final BallotBox ballotBox;
 
-        public PreVoteResponseCallBack(BallotBox ballotBox) {
+        public PreVoteResponseCallBack(long term, RaftPeer raftPeer, BallotBox ballotBox) {
+            this.term = term;
+            this.raftPeer = raftPeer;
             this.ballotBox = ballotBox;
         }
 
@@ -143,11 +154,35 @@ public class FollowerState {
         public void onResponse(VoteResponse response) {
             try {
                 xRaftNode.getState().getWriteLock().lock();
-                if (ballotBox != preVoteBallotBox) {
-                    log.warn("PreVoteResponseCallBack is outdated");
+                if (xRaftNode.getState().getRole() != RaftRole.FOLLOWER) {
+                    log.info("node:{} PreVoteResponseCallBack exit, current role is {}", raftPeer, xRaftNode.getState().getRole());
+                    return;
                 }
-                // todo
-
+                if (term != xRaftNode.getState().getCurrentTerm()) {
+                    log.warn("node:{} PreVoteResponseCallBack is outdated", raftPeer);
+                    return;
+                }
+                if (ballotBox != preVoteBallotBox) {
+                    log.warn("node:{} PreVoteResponseCallBack is outdated", raftPeer);
+                    return;
+                }
+                if (!response.isSuccess()) {
+                    log.warn("node:{} PreVoteResponseCallBack response fail:{}", raftPeer, response);
+                    return;
+                }
+                if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
+                    log.warn("node:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response);
+                    xRaftNode.getState().changeToFollower(response.getTerm());
+                    return;
+                }
+                if (response.isVoteGranted()) {
+                    log.info("node:{} PreVoteResponseCallBack vote granted", raftPeer);
+                    ballotBox.grantVote(raftPeer.getRaftPeerId());
+                    if (ballotBox.isMajorityGranted()) {
+                        log.info("node:{} PreVoteResponseCallBack majority vote granted. change to candicate", raftPeer);
+                        xRaftNode.getState().changeToCandidate();
+                    }
+                }
             } finally {
                 xRaftNode.getState().getWriteLock().unlock();
             }
@@ -155,7 +190,7 @@ public class FollowerState {
 
         @Override
         public void onError(Throwable throwable) {
-            // todo
+            log.warn("node:{} PreVoteResponseCallBack error:{}", raftPeer, throwable);
         }
     }
 

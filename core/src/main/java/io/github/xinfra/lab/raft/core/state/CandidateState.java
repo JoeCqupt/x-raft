@@ -38,7 +38,7 @@ public class CandidateState extends Thread {
             return;
         }
         running = true;
-        electionTask = new ElectionTask();
+        electionTask = new ElectionTaskThread();
         electionTask.start();
     }
 
@@ -51,9 +51,9 @@ public class CandidateState extends Thread {
         electionTask = null;
     }
 
-    class ElectionTask extends Thread {
+    class ElectionTaskThread extends Thread {
 
-        public ElectionTask() {
+        public ElectionTaskThread() {
             super("ElectionTask");
         }
 
@@ -61,49 +61,38 @@ public class CandidateState extends Thread {
         public void run() {
             while (shouldRun()) {
                 try {
-                    if (askForVotes(true)) {
-                        if (askForVotes(false)) {
-                            if (shouldRun() && xRaftNode.getState().changeToLeader()) {
-                                break;
-                            }
+                    try {
+                        xRaftNode.getState().getWriteLock().lock();
+                        if (xRaftNode.getState().getRole() != RaftRole.CANDIDATE) {
+                            log.info("ElectionTaskThread exist. current role:{}", xRaftNode.getState().getRole());
+                            break;
                         }
+                        askForVotes();
+                    } finally {
+                        xRaftNode.getState().getWriteLock().unlock();
                     }
-                    Thread.sleep(xRaftNode.getRandomElectionTimeoutMills());
+                    Thread.sleep(xRaftNode.getRaftNodeOptions().getRandomElectionTimeoutMills());
                 } catch (InterruptedException e) {
-                    log.info("ElectionTask thread interrupted");
+                    log.info("ElectionTaskThread interrupted");
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Throwable t) {
-                    log.error("ElectionTask thread run ex", t);
+                    log.error("ElectionTaskThread run ex", t);
                 }
             }
         }
 
-        private boolean askForVotes(boolean preVote) throws InterruptedException {
-            Long electionTerm;
-            ConfigurationEntry configurationEntry;
-            TermIndex lastEntryTermIndex;
-
-            if (!shouldRun()) {
-                return false;
-            }
-
-
+        private boolean askForVotes() throws InterruptedException {
             // todo: notify state machine
-            xRaftNode.getState().getLeaderId().getAndSet(null);
-            if (preVote) {
-                electionTerm = xRaftNode.getState().getCurrentTerm().get();
-            } else {
-                electionTerm = xRaftNode.getState().getCurrentTerm().incrementAndGet();
-                xRaftNode.getState().getVotedFor().getAndSet(xRaftNode.getRaftPeer().getRaftPeerId());
-                xRaftNode.getState().persistMetadata();
-            }
-            configurationEntry = xRaftNode.getConfigState().getCurrentConfig();
+            xRaftNode.getState().resetLeaderId(null);
 
-            // todo:
-//            xRaftNode.getState().startElection(preVote);
 
-            lastEntryTermIndex = xRaftNode.raftLog().getLastEntryTermIndex();
+            long electionTerm = xRaftNode.getState().getCurrentTerm() + 1;
+            xRaftNode.getState().setCurrentTerm(electionTerm);
+            xRaftNode.getState().setVotedFor(xRaftNode.getRaftPeer().getRaftPeerId());
+
+            ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
+            TermIndex lastEntryTermIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
 
 
             VoteResult voteResult = askForVotes(preVote, electionTerm, configurationEntry, lastEntryTermIndex);
@@ -236,8 +225,7 @@ public class CandidateState extends Thread {
         }
 
         private boolean shouldRun() {
-            return running && xRaftNode.getState().getRole() == RaftRole.CANDIDATE
-                    && !Thread.currentThread().isInterrupted();
+            return running && !Thread.currentThread().isInterrupted();
         }
 
     }

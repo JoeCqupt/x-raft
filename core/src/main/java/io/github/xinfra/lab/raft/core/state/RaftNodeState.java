@@ -30,7 +30,8 @@ public class RaftNodeState {
 
 	@GuardByLock
 	@Getter
-	private final Long currentTerm = 0L;
+    @Setter
+	private  Long currentTerm = 0L;
 
 	@GuardByLock
 	@Getter
@@ -99,17 +100,18 @@ public class RaftNodeState {
 	 * @param newTerm
 	 */
 	public  void changeToFollower(Long newTerm) {
+        log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
 		// todo
 	}
 
-	public void changeToCandidate() throws InterruptedException {
+	public void changeToCandidate()  {
 			role = RaftRole.CANDIDATE;
 			followerState.shutdown();
 			candidateState.startup();
 			log.info("node:{} change to candidate", xRaftNode.getRaftPeer());
 	}
 
-	public  void changeToLeader() throws InterruptedException {
+	public  void changeToLeader()  {
 			role = RaftRole.LEADER;
 			candidateState.shutdown();
 			leaderState.startup();
