@@ -102,7 +102,7 @@ public class CandidateState extends Thread {
             return;
         }
 
-
+        // update current term and votedFor
         long electionTerm = xRaftNode.getState().getCurrentTerm() + 1;
         xRaftNode.getState().setCurrentTerm(electionTerm);
         xRaftNode.getState().setVotedFor(xRaftNode.getRaftPeer().getRaftPeerId());
