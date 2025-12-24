@@ -111,22 +111,36 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 	@Override
 	public VoteResponse handlePreVoteRequest(VoteRequest voteRequest) {
-		// todo
-		return null;
+		try {
+            state.getWriteLock().lock();
+            String candidatePeerId = voteRequest.getCandidateId();
+            RaftPeer candidatePeer = state.getConfigState().getCurrentConfig().getRaftPeer(candidatePeerId);
+            if (candidatePeer == null) {
+                log.info("handlePreVoteRequest reject candidateId:{} not found.", candidatePeerId);
+                return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
+                        state.getCurrentTerm().get(), false, false);
+            }
+        } finally {
+            state.getWriteLock().unlock();
+        }
 	}
 
 	@Override
 	public VoteResponse handleVoteRequest(VoteRequest voteRequest) {
-		Verify.verify(isStarted(), "RaftNode is not started yet.");
-		// todo verify raft group
+        try {
+            state.getWriteLock().lock();
 
-		VoteContext voteContext = new VoteContext(this, voteRequest);
-		boolean voteGranted = voteContext.decideVote();
-		// todo
-		boolean shouldShutdown = false;
+            // todo
+            VoteContext voteContext = new VoteContext(this, voteRequest);
+            boolean voteGranted = voteContext.decideVote();
+            // todo
+            boolean shouldShutdown = false;
 
-		return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
-				state.getCurrentTerm().get(), voteGranted, shouldShutdown);
+            return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
+                    state.getCurrentTerm().get(), voteGranted, shouldShutdown);
+        } finally {
+            state.getWriteLock().unlock();
+        }
 	}
 
 	@Override
