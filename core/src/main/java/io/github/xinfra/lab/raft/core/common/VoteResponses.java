@@ -14,4 +14,12 @@ public class VoteResponses {
         return voteResponse;
     }
 
+    public static VoteResponse voteResponse(boolean voteGranted, long term) {
+        VoteResponse voteResponse = new VoteResponse();
+        voteResponse.setSuccess(true);
+        voteResponse.setVoteGranted(voteGranted);
+        voteResponse.setTerm(term);
+        return voteResponse;
+    }
+
 }

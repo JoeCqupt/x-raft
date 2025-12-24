@@ -1,17 +1,19 @@
 package io.github.xinfra.lab.raft.core;
 
-import com.google.common.base.Verify;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.common.RaftError;
 import io.github.xinfra.lab.raft.core.common.Responses;
 import io.github.xinfra.lab.raft.conf.Configuration;
 import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
+import io.github.xinfra.lab.raft.core.common.VoteResponses;
 import io.github.xinfra.lab.raft.core.conf.RaftConfigurationState;
 import io.github.xinfra.lab.raft.core.state.RaftNodeState;
 import io.github.xinfra.lab.raft.log.RaftLog;
+import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationRequest;
@@ -21,6 +23,7 @@ import io.github.xinfra.lab.raft.protocol.VoteResponse;
 import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public class XRaftNode extends AbstractLifeCycle implements RaftNode {
@@ -113,31 +116,59 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	public VoteResponse handlePreVoteRequest(VoteRequest voteRequest) {
 		try {
             state.getWriteLock().lock();
+            boolean granted = false;
             String candidatePeerId = voteRequest.getCandidateId();
             RaftPeer candidatePeer = state.getConfigState().getCurrentConfig().getRaftPeer(candidatePeerId);
             if (candidatePeer == null) {
-                log.info("handlePreVoteRequest reject candidateId:{} not found.", candidatePeerId);
-                return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
-                        state.getCurrentTerm().get(), false, false);
+                log.info("handlePreVoteRequest reject: candidateId:{} not found.", candidatePeerId);
+                return VoteResponses.voteResponse(granted, state.getCurrentTerm());
             }
+            if(isCurrentLeaderValid()){
+                log.info("handlePreVoteRequest reject: because the leader:{} still alive", state.getLeaderId());
+                return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+            }
+            if (voteRequest.getTerm() < state.getCurrentTerm()){
+                log.info("handlePreVoteRequest reject: because the term:{} is smaller than current term:{}", voteRequest.getTerm(), state.getCurrentTerm());
+                // todo check log appender
+                return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+            }
+            TermIndex lastEntryTermIndex = state.getRaftLog().getLastEntryTermIndex();
+            if (voteRequest.getLastLogIndex()>= lastEntryTermIndex.getIndex() && voteRequest.getLastLogTerm()>=lastEntryTermIndex.getTerm()) {
+                granted = true;
+            }
+            return VoteResponses.voteResponse(granted, state.getCurrentTerm());
         } finally {
             state.getWriteLock().unlock();
         }
 	}
 
-	@Override
+    @Override
 	public VoteResponse handleVoteRequest(VoteRequest voteRequest) {
         try {
             state.getWriteLock().lock();
+            boolean granted = false;
+            if (voteRequest.getTerm() < state.getCurrentTerm()) {
+                log.info("handleVoteRequest reject: because the term:{} is smaller than current term:{}", voteRequest.getTerm(), state.getCurrentTerm());
+                return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+            }
+            if (voteRequest.getTerm() > state.getCurrentTerm()){
+                log.info("handleVoteRequest receive higher term:{} current term:{}  change to follower", voteRequest.getTerm(), state.getCurrentTerm());
+                state.changeToFollower(voteRequest.getTerm());
+            }
 
-            // todo
-            VoteContext voteContext = new VoteContext(this, voteRequest);
-            boolean voteGranted = voteContext.decideVote();
-            // todo
-            boolean shouldShutdown = false;
+            TermIndex lastEntryTermIndex = state.getRaftLog().getLastEntryTermIndex();
 
-            return Responses.voteResponse(voteRequest.getPeerId(), voteRequest.getReplyPeerId(),
-                    state.getCurrentTerm().get(), voteGranted, shouldShutdown);
+            if (voteRequest.getLastLogIndex() >= lastEntryTermIndex.getIndex() && voteRequest.getLastLogTerm() >= lastEntryTermIndex.getTerm()) {
+                if (StringUtils.isBlank(state.getVotedFor())){
+                    state.setVotedFor(voteRequest.getCandidateId());
+                    state.persistMetadata();
+                    state.changeToFollower();
+                    granted = true;
+                } else if (state.getVotedFor().equals(voteRequest.getCandidateId())){
+                    granted = true;
+                }
+            }
+            return VoteResponses.voteResponse(granted, state.getCurrentTerm());
         } finally {
             state.getWriteLock().unlock();
         }
@@ -156,4 +187,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return null;
 	}
 
+    private boolean isCurrentLeaderValid() {
+        return StringUtils.isNoneBlank(state.getLeaderId()) &&
+                System.currentTimeMillis() - state.getLastLeaderRpcTimeMills() < raftNodeOptions.getElectionTimeoutMills();
+    }
 }

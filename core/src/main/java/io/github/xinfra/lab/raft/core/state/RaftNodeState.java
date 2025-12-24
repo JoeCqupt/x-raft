@@ -102,7 +102,10 @@ public class RaftNodeState {
      */
     public void changeToFollower(Long newTerm) {
         log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
-        // todo
+        this.currentTerm = newTerm;
+        this.votedFor = null;
+        persistMetadata();
+        changeToFollower();
     }
 
     public void changeToCandidate() {

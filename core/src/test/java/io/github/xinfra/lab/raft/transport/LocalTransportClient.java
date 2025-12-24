@@ -8,6 +8,7 @@ import io.github.xinfra.lab.raft.protocol.RequestMessage;
 import io.github.xinfra.lab.raft.protocol.ResponseMessage;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.net.SocketAddress;
@@ -25,6 +26,7 @@ import static io.github.xinfra.lab.raft.core.transport.RaftApi.appendEntries;
 import static io.github.xinfra.lab.raft.core.transport.RaftApi.requestVote;
 
 
+@Slf4j
 public class LocalTransportClient extends AbstractLifeCycle implements TransportClient {
 
     private TransportClientOptions transportClientOptions;
@@ -117,6 +119,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
             }
             throw new IllegalStateException("not support api: " + requestApi);
         } catch (Exception e) {
+            log.error("asyncCall ex", e);
             exception(requestId, e);
         }
     }
