@@ -147,6 +147,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
         try {
             state.getWriteLock().lock();
             boolean granted = false;
+			String candidatePeerId = voteRequest.getCandidateId();
+			RaftPeer candidatePeer = state.getConfigState().getCurrentConfig().getRaftPeer(candidatePeerId);
+			if (candidatePeer == null) {
+				log.info("handleVoteRequest reject: candidateId:{} not found.", candidatePeerId);
+				return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+			}
             if (voteRequest.getTerm() < state.getCurrentTerm()) {
                 log.info("handleVoteRequest reject: because the term:{} is smaller than current term:{}", voteRequest.getTerm(), state.getCurrentTerm());
                 return VoteResponses.voteResponse(granted, state.getCurrentTerm());

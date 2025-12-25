@@ -12,7 +12,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class LeaderState extends Thread {
+public class LeaderState  {
 
 	private static final Logger log = LoggerFactory.getLogger(LeaderState.class);
 
