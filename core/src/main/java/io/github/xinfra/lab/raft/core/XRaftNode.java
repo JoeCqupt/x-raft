@@ -96,8 +96,14 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		}
 		// todo: connect to peers
 		try {
-			state.getWriteLock().lock();
-			state.changeToFollower();
+            state.getWriteLock().lock();
+            RaftPeer raftPeer = state.getConfigState().getCurrentConfig().getRaftPeer(getRaftPeerId());
+            if (raftPeer != null) {
+                state.changeToFollower();
+            } else {
+                // not in config
+                state.changeToLearner();
+            }
 		}finally {
 			state.getWriteLock().unlock();
 		}

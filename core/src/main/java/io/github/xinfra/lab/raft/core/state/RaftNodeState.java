@@ -59,6 +59,9 @@ public class RaftNodeState {
     private LeaderState leaderState;
 
     @GuardByLock
+    private LearnerState learnerState;
+
+    @GuardByLock
     @Getter
     private RaftLog raftLog;
 
@@ -78,6 +81,7 @@ public class RaftNodeState {
         this.followerState = new FollowerState(xRaftNode);
         this.candidateState = new CandidateState(xRaftNode);
         this.leaderState = new LeaderState(xRaftNode);
+        this.learnerState = new LearnerState(xRaftNode);
     }
 
     public void changeToFollower() {
@@ -132,5 +136,11 @@ public class RaftNodeState {
 
     public void resetLeaderId(String peerId) {
         // todo implement
+    }
+
+    public void changeToLearner() {
+        role = RaftRole.LEARNER;
+        learnerState.startup();
+        log.info("node:{} change to learner", xRaftNode.getRaftPeer());
     }
 }

@@ -31,7 +31,7 @@ public class LeaderState  {
 
 	}
 
-	public synchronized void startup() {
+	public  void startup() {
 		if (running) {
 			return;
 		}
@@ -60,7 +60,7 @@ public class LeaderState  {
 		stateEventExecutor.start();
 	}
 
-	public synchronized void shutdown() {
+	public  void shutdown() {
 		if (!running) {
 			return;
 		}
