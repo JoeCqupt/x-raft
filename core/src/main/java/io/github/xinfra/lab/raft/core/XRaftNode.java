@@ -123,6 +123,10 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		try {
             state.getWriteLock().lock();
             boolean granted = false;
+			if (state.getRole() == RaftRole.LEARNER){
+				log.info("handleVoteRequest reject: because the role is learner");
+				return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+			}
             String candidatePeerId = voteRequest.getCandidateId();
             RaftPeer candidatePeer = state.getConfigState().getCurrentConfig().getRaftPeer(candidatePeerId);
             if (candidatePeer == null) {
@@ -153,6 +157,10 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
         try {
             state.getWriteLock().lock();
             boolean granted = false;
+			if (state.getRole() == RaftRole.LEARNER){
+				log.info("handleVoteRequest reject: because the role is learner");
+				return VoteResponses.voteResponse(granted, state.getCurrentTerm());
+			}
 			String candidatePeerId = voteRequest.getCandidateId();
 			RaftPeer candidatePeer = state.getConfigState().getCurrentConfig().getRaftPeer(candidatePeerId);
 			if (candidatePeer == null) {

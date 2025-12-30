@@ -2,12 +2,14 @@ package io.github.xinfra.lab.raft.core.state;
 
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
+import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,18 +37,21 @@ public class LeaderState  {
 		if (running) {
 			return;
 		}
+		running = true;
+
 		// set leader id to getRaftPeer id
 		xRaftNode.getState().resetLeaderId(xRaftNode.getRaftPeer().getRaftPeerId());
-		// append an entry to log when leader startup
-		// todo: append a no-op entry or configuration entry
-		xRaftNode.raftLog().append(null);
+		// append  configuration entry when leader startup
+		ConfigurationEntry entry = xRaftNode.getState().getConfigState().getCurrentConfig();
+		xRaftNode.getState().getRaftLog().append(entry);
+		// todo
 
 		// init log appenders
-		List<RaftPeer> otherRaftPeers = xRaftNode.getConfigState().getCurrentConfig().getPeers();
-		// remove self
-		otherRaftPeers.remove(xRaftNode.getRaftPeer());
-
-		for (RaftPeer raftPeer : otherRaftPeers) {
+		List<RaftPeer> raftPeers = xRaftNode.getState().getConfigState().getCurrentConfig().getPeers();
+		for (RaftPeer raftPeer : raftPeers) {
+			if (Objects.equals(raftPeer.getRaftPeerId() , xRaftNode.getRaftPeer().getRaftPeerId())){
+				continue;
+			}
 			logReplicators.add(new LogReplicator(raftPeer, xRaftNode));
 		}
 		// start log appenders
@@ -55,7 +60,6 @@ public class LeaderState  {
 		}
 
 		// todo : learner log
-
 		stateEventExecutor = new StateEventExecutor();
 		stateEventExecutor.start();
 	}
@@ -71,6 +75,7 @@ public class LeaderState  {
 		}
 		logReplicators.clear();
 		stateEventExecutor.interrupt();
+		stateEventExecutor = null;
 	}
 
 	class StateEventExecutor extends Thread {
@@ -85,27 +90,25 @@ public class LeaderState  {
 				try {
 					// todo: poll timeout config
 					StateEvent event = eventQueue.poll(100, TimeUnit.MILLISECONDS);
-					synchronized (xRaftNode) {
-						if (shouldRun()) {
+					// todo: write lock
 							if (event != null) {
 								event.execute();
 							}
 							// todo: leader other logic
-						}
-					}
+
 				}
 				catch (InterruptedException ie) {
-					log.warn("LeaderState thread is interrupted");
+					log.warn("StateEventExecutor thread is interrupted");
 					break;
 				}
 				catch (Exception e) {
-					log.warn("LeaderState thread ex", e);
+					log.warn("StateEventExecutor thread ex", e);
 				}
 			}
 		}
 
 		private boolean shouldRun() {
-			return running && xRaftNode.getState().getRole() == RaftRole.LEADER;
+			return running && !Thread.currentThread().isInterrupted();
 		}
 
 	}

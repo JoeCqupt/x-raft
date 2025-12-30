@@ -85,6 +85,9 @@ public class RaftNodeState {
     }
 
     public void changeToFollower() {
+        if (role == RaftRole.FOLLOWER) {
+            return;
+        }
         role = RaftRole.FOLLOWER;
         if (role == RaftRole.CANDIDATE) {
             candidateState.shutdown();
@@ -113,6 +116,9 @@ public class RaftNodeState {
     }
 
     public void changeToCandidate() {
+        if (role == RaftRole.CANDIDATE) {
+            return;
+        }
         role = RaftRole.CANDIDATE;
         followerState.shutdown();
         candidateState.startup();
@@ -120,10 +126,22 @@ public class RaftNodeState {
     }
 
     public void changeToLeader() {
+        if (role == RaftRole.LEADER) {
+            return;
+        }
         role = RaftRole.LEADER;
         candidateState.shutdown();
         leaderState.startup();
         log.info("node:{} change to leader", xRaftNode.getRaftPeer());
+    }
+
+    public void changeToLearner() {
+        if (role == RaftRole.LEARNER) {
+            return;
+        }
+        role = RaftRole.LEARNER;
+        learnerState.startup();
+        log.info("node:{} change to learner", xRaftNode.getRaftPeer());
     }
 
     public void persistMetadata() {
@@ -138,9 +156,5 @@ public class RaftNodeState {
         // todo implement
     }
 
-    public void changeToLearner() {
-        role = RaftRole.LEARNER;
-        learnerState.startup();
-        log.info("node:{} change to learner", xRaftNode.getRaftPeer());
-    }
+
 }
