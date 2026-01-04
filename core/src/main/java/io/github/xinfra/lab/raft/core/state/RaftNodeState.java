@@ -18,7 +18,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 public class RaftNodeState {
 
-
     /**
      * guard lock for state transition
      */
@@ -27,6 +26,8 @@ public class RaftNodeState {
     private final Lock writeLock = lock.writeLock();
     @Getter
     private final Lock readLock = lock.readLock();
+
+    private final XRaftNode xRaftNode;
 
     @GuardByLock
     @Getter
@@ -46,8 +47,6 @@ public class RaftNodeState {
     @GuardByLock
     @Getter
     private volatile RaftRole role;
-
-    private final XRaftNode xRaftNode;
 
     @GuardByLock
     private FollowerState followerState;
@@ -72,7 +71,6 @@ public class RaftNodeState {
     @GuardByLock
     @Getter
     private volatile Long lastLeaderRpcTimeMills = System.currentTimeMillis();
-
 
     public RaftNodeState(XRaftNode xRaftNode, RaftLog raftLog, RaftConfigurationState configState) {
         this.xRaftNode = xRaftNode;
@@ -154,6 +152,8 @@ public class RaftNodeState {
 
     public void resetLeaderId(String peerId) {
         // todo implement
+
+        // todo: notify state machine
     }
 
 

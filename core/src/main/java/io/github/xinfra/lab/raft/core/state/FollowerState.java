@@ -94,15 +94,13 @@ public class FollowerState {
 
 
     private void preVote() throws Exception {
-
-
         log.info("node:{} start preVote", xRaftNode.getRaftGroupPeerId());
         // reset leader
         xRaftNode.getState().resetLeaderId(null);
 
         ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
-        if (config.getRaftPeer(xRaftNode.getRaftPeer().getRaftPeerId()) == null) {
-            log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeer().getRaftPeerId());
+        if (config.getRaftPeer(xRaftNode.getRaftPeerId()) == null) {
+            log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeerId());
             return;
         }
 
@@ -113,14 +111,15 @@ public class FollowerState {
         CallOptions callOptions = new CallOptions();
         callOptions.setTimeoutMs(xRaftNode.getRaftNodeOptions().getElectionTimeoutMills());
         for (RaftPeer raftPeer : config.getPeers()) {
-            if (xRaftNode.getRaftPeer().equals(raftPeer)) {
+            if (xRaftNode.getRaftPeerId().equals(raftPeer.getRaftPeerId())) {
                 continue;
             }
             VoteRequest voteRequest = new VoteRequest();
-            voteRequest.setRaftGroupId(xRaftNode.getRaftGroupPeerId());
+            voteRequest.setRaftGroupId(xRaftNode.getRaftGroupId());
+            voteRequest.setRaftPeerId(raftPeer.getRaftPeerId());
             voteRequest.setPreVote(true);
             voteRequest.setTerm(term + 1);
-            voteRequest.setCandidateId(xRaftNode.getRaftPeer().getRaftPeerId());
+            voteRequest.setCandidateId(xRaftNode.getRaftPeerId());
             voteRequest.setLastLogIndex(lastLogIndex.getIndex());
             voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
@@ -133,7 +132,7 @@ public class FollowerState {
             );
         }
         // grant self vote
-        preVoteBallotBox.grantVote(xRaftNode.getRaftPeer().getRaftPeerId());
+        preVoteBallotBox.grantVote(xRaftNode.getRaftPeerId());
         if (preVoteBallotBox.isMajorityGranted()) {
             xRaftNode.getState().changeToCandidate();
         }

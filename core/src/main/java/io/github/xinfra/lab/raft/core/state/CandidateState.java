@@ -10,16 +10,7 @@ import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
 import io.github.xinfra.lab.raft.transport.CallOptions;
 import io.github.xinfra.lab.raft.transport.ResponseCallBack;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class CandidateState extends Thread {
@@ -93,19 +84,18 @@ public class CandidateState extends Thread {
 
     private void vote() throws Exception {
         log.info("node:{} ask for votes", xRaftNode.getRaftPeer());
-        // todo: notify state machine
         xRaftNode.getState().resetLeaderId(null);
 
         ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
-        if (config.getRaftPeer(xRaftNode.getRaftPeer().getRaftPeerId()) == null) {
-            log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeer().getRaftPeerId());
+        if (config.getRaftPeer(xRaftNode.getRaftPeerId()) == null) {
+            log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeerId());
             return;
         }
 
         // update current term and votedFor
         long electionTerm = xRaftNode.getState().getCurrentTerm() + 1;
         xRaftNode.getState().setCurrentTerm(electionTerm);
-        xRaftNode.getState().setVotedFor(xRaftNode.getRaftPeer().getRaftPeerId());
+        xRaftNode.getState().setVotedFor(xRaftNode.getRaftPeerId());
         xRaftNode.getState().persistMetadata();
 
         TermIndex lastLogIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
@@ -115,14 +105,15 @@ public class CandidateState extends Thread {
         CallOptions callOptions = new CallOptions();
         callOptions.setTimeoutMs(xRaftNode.getRaftNodeOptions().getElectionTimeoutMills());
         for (RaftPeer raftPeer : config.getPeers()) {
-            if (xRaftNode.getRaftPeer().equals(raftPeer)) {
+            if (xRaftNode.getRaftPeerId().equals(raftPeer.getRaftPeerId())) {
                 continue;
             }
             VoteRequest voteRequest = new VoteRequest();
-            voteRequest.setRaftGroupId(xRaftNode.getRaftGroupPeerId());
+            voteRequest.setRaftGroupId(xRaftNode.getRaftGroupId());
+            voteRequest.setRaftPeerId(raftPeer.getRaftPeerId());
             voteRequest.setPreVote(false);
             voteRequest.setTerm(electionTerm);
-            voteRequest.setCandidateId(xRaftNode.getRaftPeer().getRaftPeerId());
+            voteRequest.setCandidateId(xRaftNode.getRaftPeerId());
             voteRequest.setLastLogIndex(lastLogIndex.getIndex());
             voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
@@ -135,7 +126,7 @@ public class CandidateState extends Thread {
             );
         }
         // grant self vote
-        voteBallotBox.grantVote(xRaftNode.getRaftPeer().getRaftPeerId());
+        voteBallotBox.grantVote(xRaftNode.getRaftPeerId());
         if (voteBallotBox.isMajorityGranted()) {
             xRaftNode.getState().changeToLeader();
         }
@@ -160,7 +151,7 @@ public class CandidateState extends Thread {
             }
             try {
                 xRaftNode.getState().getWriteLock().lock();
-                if (xRaftNode.getState().getRole()!= RaftRole.CANDIDATE){
+                if (xRaftNode.getState().getRole() != RaftRole.CANDIDATE) {
                     log.warn("node:{} VoteResponseCallBack exist, current role is {}", raftPeer, xRaftNode.getState().getRole());
                     return;
                 }
@@ -168,19 +159,19 @@ public class CandidateState extends Thread {
                     log.warn("node:{} VoteResponseCallBack is outdated", raftPeer);
                     return;
                 }
-                if (ballotBox != voteBallotBox){
+                if (ballotBox != voteBallotBox) {
                     log.warn("node:{} VoteResponseCallBack is outdated", raftPeer);
                     return;
                 }
-                if (response.getTerm() > xRaftNode.getState().getCurrentTerm()){
+                if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
                     log.warn("node:{} VoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
                     xRaftNode.getState().changeToFollower(response.getTerm());
                     return;
                 }
-                if (response.isVoteGranted()){
+                if (response.isVoteGranted()) {
                     log.info("node:{} VoteResponseCallBack response granted", raftPeer);
                     ballotBox.grantVote(raftPeer.getRaftPeerId());
-                    if (ballotBox.isMajorityGranted()){
+                    if (ballotBox.isMajorityGranted()) {
                         log.info("node:{} VoteResponseCallBack majority granted. change to leader", raftPeer);
                         xRaftNode.getState().changeToLeader();
                     }
