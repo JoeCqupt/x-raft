@@ -22,7 +22,7 @@ public class LeaderState  {
 
 	private final XRaftNode xRaftNode;
 
-	private List<LogReplicator> logReplicators = new ArrayList<>();
+	private final LogReplicatorGroup logReplicatorGroup;
 
 	private BlockingQueue<StateEvent> eventQueue = new ArrayBlockingQueue<>(4096);
 
@@ -30,7 +30,7 @@ public class LeaderState  {
 
 	public LeaderState(XRaftNode xRaftNode) {
 		this.xRaftNode = xRaftNode;
-
+		this.logReplicatorGroup = new LogReplicatorGroup(xRaftNode);
 	}
 
 	public  void startup() {
@@ -41,25 +41,26 @@ public class LeaderState  {
 
 		// set leader id to getRaftPeer id
 		xRaftNode.getState().resetLeaderId(xRaftNode.getRaftPeer().getRaftPeerId());
-		// append  configuration entry when leader startup
-		ConfigurationEntry entry = xRaftNode.getState().getConfigState().getCurrentConfig();
-		xRaftNode.getState().getRaftLog().append(entry);
-		// todo
+		// append   configurationEntry when leader startup
+		ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
+		xRaftNode.getState().getRaftLog().append(configurationEntry);
 
 		// init log appenders
-		List<RaftPeer> raftPeers = xRaftNode.getState().getConfigState().getCurrentConfig().getPeers();
+		List<RaftPeer> raftPeers = configurationEntry.getPeers();
 		for (RaftPeer raftPeer : raftPeers) {
-			if (Objects.equals(raftPeer.getRaftPeerId() , xRaftNode.getRaftPeer().getRaftPeerId())){
+			if (Objects.equals(raftPeer.getRaftPeerId() , xRaftNode.getRaftPeerId())){
 				continue;
 			}
-			logReplicators.add(new LogReplicator(raftPeer, xRaftNode));
+			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
-		// start log appenders
-		for (LogReplicator logReplicator : logReplicators) {
-			logReplicator.start();
+		List<RaftPeer> learners = configurationEntry.getLearners();
+		for (RaftPeer raftPeer : learners) {
+			if (Objects.equals(raftPeer.getRaftPeerId() , xRaftNode.getRaftPeerId())){
+				continue;
+			}
+			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
 
-		// todo : learner log
 		stateEventExecutor = new StateEventExecutor();
 		stateEventExecutor.start();
 	}
