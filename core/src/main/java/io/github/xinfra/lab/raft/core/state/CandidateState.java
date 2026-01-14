@@ -13,7 +13,7 @@ import io.github.xinfra.lab.raft.transport.ResponseCallBack;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CandidateState extends Thread {
+public class CandidateState  {
 
     private volatile boolean running;
 

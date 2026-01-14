@@ -5,89 +5,101 @@ import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public  class LogReplicatorGroup {
-	private final XRaftNode xRaftNode;
+@Slf4j
+public class LogReplicatorGroup {
 
-	public LogReplicatorGroup(XRaftNode xRaftNode) {
-		this.xRaftNode = xRaftNode;
-	}
+    private final XRaftNode xRaftNode;
 
-	public void addLogReplicator(RaftPeer raftPeer) {
-		// todo
-	}
+    Map<String, LogReplicator> logReplicators = new ConcurrentHashMap<>();
 
-	@Data
-	static class LogReplicator extends Thread {
+    public LogReplicatorGroup(XRaftNode xRaftNode) {
+        this.xRaftNode = xRaftNode;
+    }
 
-		private volatile boolean running = true;
+    public void addLogReplicator(RaftPeer raftPeer) {
+        if (logReplicators.containsKey(raftPeer.getRaftPeerId())) {
+            return;
+        }
+        // todo: nextIdx
+        LogReplicator logReplicator = new LogReplicator(raftPeer);
+        logReplicators.put(raftPeer.getRaftPeerId(), logReplicator);
+        logReplicator.start();
+    }
 
-		private final RaftPeer raftPeer;
+    public void shutdown() {
+        for (LogReplicator logReplicator : logReplicators.values()) {
+            logReplicator.shutdown();
+        }
+    }
 
-		private Long nextIndex;
+    @Data
+    class LogReplicator extends Thread {
 
-		private Long matchIndex = -1L;
+        private volatile boolean running = true;
 
-		// todo : await and notify
-		private final Lock awaitLock = new ReentrantLock();
+        private final RaftPeer raftPeer;
 
-		private Long lastAppendSendTime;
+        private Long nextIndex;
 
-		public LogReplicator(RaftPeer raftPeer, XRaftNode xRaftNode) {
-			this.raftPeer = raftPeer;
-			this.xRaftNode = xRaftNode;
-			this.nextIndex = xRaftNode.raftLog().getNextIndex();
-		}
+        private Long matchIndex = -1L;
 
-		@Override
-		public void run() {
-			while (shouldRun()) {
-				if (shouldAppend()) {
-					sendAppendEntries();
-				}
-			}
-		}
+        private Long lastAppendSendTime;
 
-		private void sendAppendEntries() {
-			// todo
+        public LogReplicator(RaftPeer raftPeer) {
+            this.raftPeer = raftPeer;
+        }
 
-			AppendEntriesRequest request = new AppendEntriesRequest();
-			request.setLeaderId(xRaftNode.getState().getLeaderId().get());
+        @Override
+        public void run() {
+            while (shouldRun()) {
+                if (shouldAppend()) {
+                    sendAppendEntries();
+                }
+            }
+        }
 
-		}
+        private void sendAppendEntries() {
+            // todo
 
-		private boolean shouldAppend() {
-			return hasEntries() || heartbeatLeftTimeMills() <= 0;
-		}
+            AppendEntriesRequest request = new AppendEntriesRequest();
+            request.setLeaderId(xRaftNode.getState().getLeaderId().get());
 
-		private Long heartbeatLeftTimeMills() {
-			if (lastAppendSendTime == 0) {
-				// run first time
-				return 0L;
-			}
-			// todo: to calculate it
-			// todo: why
-			Long electionTimeoutMills = xRaftNode.getRaftNodeOptions().getElectionTimeoutMills();
-			Long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
-			return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
-		}
+        }
 
-		private boolean hasEntries() {
-			return nextIndex < xRaftNode.raftLog().getNextIndex();
-		}
+        private boolean shouldAppend() {
+            return hasEntries() || heartbeatLeftTimeMills() <= 0;
+        }
 
-		private boolean shouldRun() {
-			return running && xRaftNode.getState().getRole() == RaftRole.LEADER;
-		}
+        private Long heartbeatLeftTimeMills() {
+            if (lastAppendSendTime == 0) {
+                // run first time
+                return 0L;
+            }
+            // todo: to calculate it
+            // todo: why
+            Long electionTimeoutMills = xRaftNode.getRaftNodeOptions().getElectionTimeoutMills();
+            Long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
+            return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
+        }
 
-		public void shutdown() {
-			running = false;
-			this.interrupt();
-		}
+        private boolean hasEntries() {
+            return nextIndex < xRaftNode.raftLog().getNextIndex();
+        }
 
-	}
+        private boolean shouldRun() {
+            return running && xRaftNode.getState().getRole() == RaftRole.LEADER;
+        }
+
+        public void shutdown() {
+            running = false;
+            this.interrupt();
+        }
+
+    }
 
 }
