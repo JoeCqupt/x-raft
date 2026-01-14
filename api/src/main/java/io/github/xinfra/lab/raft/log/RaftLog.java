@@ -4,21 +4,19 @@ import java.io.Closeable;
 
 public interface RaftLog extends Closeable {
 
-	Long INVALID_LOG_INDEX = -1l;
+    RaftMetadata loadMetadata();
 
-	Long INVALID_LOG_TERM = -1l;
+    void persistMetadata(RaftMetadata raftMetadata);
 
-	void persistMetadata(RaftMetadata raftMetadata);
+    void append(LogEntry logEntry);
 
-	RaftMetadata loadMetadata();
+    /**
+     * @return the {@link TermIndex} of the last log entry.
+     */
+    TermIndex getLastEntryTermIndex();
 
-	/**
-	 * @return the {@link TermIndex} of the last log entry.
-	 */
-	TermIndex getLastEntryTermIndex();
 
-	void append(LogEntry logEntry);
-
-	Long getNextIndex();
-
+    default Long getNextIndex() {
+        return getLastEntryTermIndex().getIndex() + 1;
+    }
 }

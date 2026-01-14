@@ -66,7 +66,6 @@ public class MemoryRaftLog implements RaftLog {
 	@Override
 	public Long getNextIndex() {
 		TermIndex lastEntryTermIndex = getLastEntryTermIndex();
-
 		return lastEntryTermIndex.getIndex() + 1;
 	}
 

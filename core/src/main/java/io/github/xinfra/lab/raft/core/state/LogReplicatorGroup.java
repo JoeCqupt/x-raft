@@ -4,7 +4,6 @@ import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -26,7 +25,7 @@ public class LogReplicatorGroup {
             return;
         }
         // todo: nextIdx
-        LogReplicator logReplicator = new LogReplicator(raftPeer);
+        LogReplicator logReplicator = new LogReplicator(raftPeer, xRaftNode.getState().getRaftLog().getNextIndex());
         logReplicators.put(raftPeer.getRaftPeerId(), logReplicator);
         logReplicator.start();
     }
@@ -37,7 +36,10 @@ public class LogReplicatorGroup {
         }
     }
 
-    @Data
+    /**
+     * 流水线复制 优化
+     */
+    @Slf4j
     class LogReplicator extends Thread {
 
         private volatile boolean running = true;
@@ -46,53 +48,52 @@ public class LogReplicatorGroup {
 
         private Long nextIndex;
 
-        private Long matchIndex = -1L;
+        private Long matchIndex = -1L; // todo: no use
 
-        private Long lastAppendSendTime;
+        private Long lastAppendSendTime; // todo: no use
 
-        public LogReplicator(RaftPeer raftPeer) {
+        public LogReplicator(RaftPeer raftPeer, Long nextIndex) {
             this.raftPeer = raftPeer;
+            this.nextIndex = nextIndex;
         }
 
         @Override
         public void run() {
             while (shouldRun()) {
                 if (shouldAppend()) {
-                    sendAppendEntries();
+                    appendEntries();
                 }
             }
         }
 
-        private void sendAppendEntries() {
-            // todo
-
+        private void appendEntries() {
             AppendEntriesRequest request = new AppendEntriesRequest();
-            request.setLeaderId(xRaftNode.getState().getLeaderId().get());
-
+            request.setLeaderId(xRaftNode.getState().getLeaderId());
         }
 
         private boolean shouldAppend() {
-            return hasEntries() || heartbeatLeftTimeMills() <= 0;
+            return xRaftNode.getState().getRole() == RaftRole.LEADER &&
+                    (hasMoreEntries() || timeoutHeartbeat());
         }
 
-        private Long heartbeatLeftTimeMills() {
+        private boolean timeoutHeartbeat() {
             if (lastAppendSendTime == 0) {
                 // run first time
-                return 0L;
+                return true;
             }
             // todo: to calculate it
             // todo: why
             Long electionTimeoutMills = xRaftNode.getRaftNodeOptions().getElectionTimeoutMills();
             Long noHeartbeatTimeMills = System.currentTimeMillis() - lastAppendSendTime;
-            return (electionTimeoutMills / 3) - noHeartbeatTimeMills;
+            return ((electionTimeoutMills / 3) - noHeartbeatTimeMills) <= 0L;
         }
 
-        private boolean hasEntries() {
-            return nextIndex < xRaftNode.raftLog().getNextIndex();
+        private boolean hasMoreEntries() {
+            return nextIndex < xRaftNode.getState().getRaftLog().getNextIndex();
         }
 
         private boolean shouldRun() {
-            return running && xRaftNode.getState().getRole() == RaftRole.LEADER;
+            return running && !Thread.currentThread().isInterrupted();
         }
 
         public void shutdown() {
