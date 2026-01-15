@@ -67,8 +67,15 @@ public class LogReplicatorGroup {
         }
 
         private void appendEntries() {
-            AppendEntriesRequest request = new AppendEntriesRequest();
-            request.setLeaderId(xRaftNode.getState().getLeaderId());
+            if (timeoutHeartbeat()){
+                AppendEntriesRequest request = new AppendEntriesRequest();
+                request.setTerm(xRaftNode.getState().getCurrentTerm());
+                request.setLeaderId(xRaftNode.getState().getLeaderId());
+
+            } else {
+
+            }
+
         }
 
         private boolean shouldAppend() {

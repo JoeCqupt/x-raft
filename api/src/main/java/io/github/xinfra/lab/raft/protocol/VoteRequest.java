@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.io.Serializable;
 
 @Data
-public class VoteRequest extends RequestMessage implements Serializable {
+public class VoteRequest extends RequestMessage  {
 
 
 	private boolean preVote;

@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.io.Serializable;
 
 @Data
-public class VoteResponse extends ResponseMessage implements Serializable {
+public class VoteResponse extends ResponseMessage  {
 
 	Long term;
 

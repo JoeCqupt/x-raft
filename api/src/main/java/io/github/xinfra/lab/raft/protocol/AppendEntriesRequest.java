@@ -9,7 +9,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class AppendEntriesRequest extends Message implements Serializable {
+public class AppendEntriesRequest extends RequestMessage  {
 
 	private Long term;
 
@@ -21,6 +21,6 @@ public class AppendEntriesRequest extends Message implements Serializable {
 
 	private List<LogEntry> entries;
 
-	private Long leaderCommit;
+	private Long commitIndex;
 
 }
