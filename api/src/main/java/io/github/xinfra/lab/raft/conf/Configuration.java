@@ -14,12 +14,12 @@ public class Configuration implements Serializable {
 	/**
 	 * All peers in the raft group. LEADER, CANDIDATE, FOLLOWER
 	 */
-	private  List<RaftPeer> peers = new ArrayList<>();
+	private List<RaftPeer> peers = new ArrayList<>();
 
 	/**
 	 * Learners
 	 */
-	private  List<RaftPeer> learners = new ArrayList<>();
+	private List<RaftPeer> learners = new ArrayList<>();
 
 	public Configuration(List<RaftPeer> peers, List<RaftPeer> learners) {
 		checkPeerIds(peers);
@@ -27,7 +27,6 @@ public class Configuration implements Serializable {
 		this.peers = peers;
 		this.learners = learners;
 	}
-
 
 	public void checkPeerIds(List<RaftPeer> peerIds) {
 		// check duplicate peerId
@@ -37,7 +36,5 @@ public class Configuration implements Serializable {
 		Validate.isTrue(peerIds.stream().map(RaftPeer::getAddress).distinct().count() == peerIds.size(),
 				"peers can not have duplicate address");
 	}
-
-
 
 }

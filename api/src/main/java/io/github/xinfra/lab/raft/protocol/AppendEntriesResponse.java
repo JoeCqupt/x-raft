@@ -7,8 +7,14 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-public class AppendEntriesResponse extends ResponseMessage  {
+public class AppendEntriesResponse implements Serializable {
+
+	boolean success;
 
 	private Long term;
+
+	private Long conflictIndex;
+
+	private Long conflictTerm;
 
 }

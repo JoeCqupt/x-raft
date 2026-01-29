@@ -14,147 +14,151 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
 @Slf4j
 public class RaftNodeState {
 
-    /**
-     * guard lock for state transition
-     */
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    @Getter
-    private final Lock writeLock = lock.writeLock();
-    @Getter
-    private final Lock readLock = lock.readLock();
+	/**
+	 * guard lock for state transition
+	 */
+	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private final XRaftNode xRaftNode;
+	@Getter
+	private final Lock writeLock = lock.writeLock();
 
-    @GuardByLock
-    @Getter
-    @Setter
-    private Long currentTerm = 0L;
+	@Getter
+	private final Lock readLock = lock.readLock();
 
-    @GuardByLock
-    @Getter
-    @Setter
-    private volatile String votedFor;
+	private final XRaftNode xRaftNode;
 
-    @GuardByLock
-    @Setter
-    @Getter
-    private volatile String leaderId;
+	@GuardByLock
+	@Getter
+	@Setter
+	private Long currentTerm = 0L;
 
-    @GuardByLock
-    @Getter
-    private volatile RaftRole role;
+	@GuardByLock
+	@Getter
+	@Setter
+	private volatile String votedFor;
 
-    @GuardByLock
-    private FollowerState followerState;
+	@GuardByLock
+	@Setter
+	@Getter
+	private volatile String leaderId;
 
-    @GuardByLock
-    private CandidateState candidateState;
+	@GuardByLock
+	@Getter
+	private volatile RaftRole role;
 
-    @GuardByLock
-    private LeaderState leaderState;
+	@GuardByLock
+	private FollowerState followerState;
 
-    @GuardByLock
-    private LearnerState learnerState;
+	@GuardByLock
+	private CandidateState candidateState;
 
-    @GuardByLock
-    @Getter
-    private RaftLog raftLog;
+	@GuardByLock
+	private LeaderState leaderState;
 
-    @GuardByLock
-    @Getter
-    private RaftConfigurationState configState;
+	@GuardByLock
+	private LearnerState learnerState;
 
-    @GuardByLock
-    @Getter
-    private volatile Long lastLeaderRpcTimeMills = System.currentTimeMillis();
+	@GuardByLock
+	@Getter
+	private RaftLog raftLog;
 
-    public RaftNodeState(XRaftNode xRaftNode, RaftLog raftLog, RaftConfigurationState configState) {
-        this.xRaftNode = xRaftNode;
-        this.raftLog = raftLog;
-        this.configState = configState;
-        this.followerState = new FollowerState(xRaftNode);
-        this.candidateState = new CandidateState(xRaftNode);
-        this.leaderState = new LeaderState(xRaftNode);
-        this.learnerState = new LearnerState(xRaftNode);
-    }
+	@Getter
+	@Setter
+	private volatile Long commitIndex = 0L;
 
-    public void changeToFollower() {
-        if (role == RaftRole.FOLLOWER) {
-            return;
-        }
-        role = RaftRole.FOLLOWER;
-        if (role == RaftRole.CANDIDATE) {
-            candidateState.shutdown();
-        }
-        if (role == RaftRole.LEADER) {
-            leaderState.shutdown();
-        }
-        if (role == RaftRole.LEARNER) {
-            // todo
-        }
-        followerState.startup();
-        log.info("node:{} change to follower", xRaftNode.getRaftPeer());
-    }
+	@GuardByLock
+	@Getter
+	private RaftConfigurationState configState;
 
-    /**
-     * new term discovered, change to follower
-     *
-     * @param newTerm
-     */
-    public void changeToFollower(Long newTerm) {
-        log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
-        this.currentTerm = newTerm;
-        this.votedFor = null;
-        persistMetadata();
-        changeToFollower();
-    }
+	@GuardByLock
+	@Getter
+	@Setter
+	private volatile Long lastLeaderRpcTimeMills = System.currentTimeMillis();
 
-    public void changeToCandidate() {
-        if (role == RaftRole.CANDIDATE) {
-            return;
-        }
-        role = RaftRole.CANDIDATE;
-        followerState.shutdown();
-        candidateState.startup();
-        log.info("node:{} change to candidate", xRaftNode.getRaftPeer());
-    }
+	public RaftNodeState(XRaftNode xRaftNode, RaftLog raftLog, RaftConfigurationState configState) {
+		this.xRaftNode = xRaftNode;
+		this.raftLog = raftLog;
+		this.configState = configState;
+		this.followerState = new FollowerState(xRaftNode);
+		this.candidateState = new CandidateState(xRaftNode);
+		this.leaderState = new LeaderState(xRaftNode);
+		this.learnerState = new LearnerState(xRaftNode);
+	}
 
-    public void changeToLeader() {
-        if (role == RaftRole.LEADER) {
-            return;
-        }
-        role = RaftRole.LEADER;
-        candidateState.shutdown();
-        leaderState.startup();
-        log.info("node:{} change to leader", xRaftNode.getRaftPeer());
-    }
+	public void changeToFollower() {
+		if (role == RaftRole.FOLLOWER) {
+			return;
+		}
+		role = RaftRole.FOLLOWER;
+		if (role == RaftRole.CANDIDATE) {
+			candidateState.shutdown();
+		}
+		if (role == RaftRole.LEADER) {
+			leaderState.shutdown();
+		}
+		if (role == RaftRole.LEARNER) {
+			// todo
+		}
+		followerState.startup();
+		log.info("node:{} change to follower", xRaftNode.getRaftPeer());
+	}
 
-    public void changeToLearner() {
-        if (role == RaftRole.LEARNER) {
-            return;
-        }
-        role = RaftRole.LEARNER;
-        learnerState.startup();
-        log.info("node:{} change to learner", xRaftNode.getRaftPeer());
-    }
+	/**
+	 * new term discovered, change to follower
+	 * @param newTerm
+	 */
+	public void changeToFollower(Long newTerm) {
+		log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
+		this.currentTerm = newTerm;
+		this.votedFor = null;
+		persistMetadata();
+		changeToFollower();
+	}
 
-    public void persistMetadata() {
-        raftLog.persistMetadata(new RaftMetadata(currentTerm, votedFor));
-    }
+	public void changeToCandidate() {
+		if (role == RaftRole.CANDIDATE) {
+			return;
+		}
+		role = RaftRole.CANDIDATE;
+		followerState.shutdown();
+		candidateState.startup();
+		log.info("node:{} change to candidate", xRaftNode.getRaftPeer());
+	}
 
-    public void updateConfiguration() {
-        configState.updateConfiguration();
-    }
+	public void changeToLeader() {
+		if (role == RaftRole.LEADER) {
+			return;
+		}
+		role = RaftRole.LEADER;
+		candidateState.shutdown();
+		leaderState.startup();
+		log.info("node:{} change to leader", xRaftNode.getRaftPeer());
+	}
 
-    public void resetLeaderId(String peerId) {
-        // todo implement
+	public void changeToLearner() {
+		if (role == RaftRole.LEARNER) {
+			return;
+		}
+		role = RaftRole.LEARNER;
+		learnerState.startup();
+		log.info("node:{} change to learner", xRaftNode.getRaftPeer());
+	}
 
-        // todo: notify state machine
-    }
+	public void persistMetadata() {
+		raftLog.persistMetadata(new RaftMetadata(currentTerm, votedFor));
+	}
 
+	public void updateConfiguration() {
+		configState.updateConfiguration();
+	}
+
+	public void resetLeaderId(String peerId) {
+		// todo implement
+
+		// todo: notify state machine
+	}
 
 }

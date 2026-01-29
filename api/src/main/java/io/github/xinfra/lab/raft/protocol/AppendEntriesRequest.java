@@ -4,12 +4,11 @@ import io.github.xinfra.lab.raft.log.LogEntry;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
 import java.util.List;
 
 @Setter
 @Getter
-public class AppendEntriesRequest extends RequestMessage  {
+public class AppendEntriesRequest extends RaftGroupAware {
 
 	private Long term;
 
@@ -21,6 +20,6 @@ public class AppendEntriesRequest extends RequestMessage  {
 
 	private List<LogEntry> entries;
 
-	private Long commitIndex;
+	private Long leaderCommit;
 
 }

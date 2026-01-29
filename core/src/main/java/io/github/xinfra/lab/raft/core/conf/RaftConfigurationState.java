@@ -1,11 +1,9 @@
 package io.github.xinfra.lab.raft.core.conf;
 
-import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.conf.ConfigurationEntry;
 import lombok.Getter;
 
 import java.util.LinkedList;
-
 
 public class RaftConfigurationState {
 
@@ -36,6 +34,5 @@ public class RaftConfigurationState {
 		}
 		this.currentConfig = (configurations.getLast());
 	}
-
 
 }

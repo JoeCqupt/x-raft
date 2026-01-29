@@ -1,14 +1,9 @@
 package io.github.xinfra.lab.raft.protocol;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.io.Serializable;
 
 @Data
-public class VoteRequest extends RequestMessage  {
-
+public class VoteRequest extends RaftGroupAware {
 
 	private boolean preVote;
 

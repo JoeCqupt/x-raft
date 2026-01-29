@@ -37,7 +37,8 @@ public class RaftNodeOptions {
 	private Long rpcTimeoutMills = 100L;
 
 	public Long getRandomElectionTimeoutMills() {
-		return ThreadLocalRandom.current().nextLong(electionTimeoutMills, electionTimeoutMills + electionTimeoutDelayMills);
+		return ThreadLocalRandom.current()
+			.nextLong(electionTimeoutMills, electionTimeoutMills + electionTimeoutDelayMills);
 	}
 
 }

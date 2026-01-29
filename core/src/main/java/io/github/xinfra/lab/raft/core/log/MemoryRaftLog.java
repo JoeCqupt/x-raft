@@ -44,7 +44,7 @@ public class MemoryRaftLog implements RaftLog {
 				return new TermIndex(last.term(), last.index());
 			}
 			else {
-				return new TermIndex(INVALID_LOG_TERM, INVALID_LOG_INDEX);
+				return new TermIndex(RaftLog.INVALID_LOG_TERM, RaftLog.INVALID_LOG_INDEX);
 			}
 		}
 		finally {
@@ -65,8 +65,43 @@ public class MemoryRaftLog implements RaftLog {
 
 	@Override
 	public Long getNextIndex() {
-		TermIndex lastEntryTermIndex = getLastEntryTermIndex();
-		return lastEntryTermIndex.getIndex() + 1;
+		readWriteLock.readLock().lock();
+		try {
+			TermIndex lastEntryTermIndex = getLastEntryTermIndex();
+			return lastEntryTermIndex.getIndex() + 1;
+		}
+		finally {
+			readWriteLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public LogEntry getEntry(Long index) {
+		readWriteLock.readLock().lock();
+		try {
+			if (index < 0 || index >= logEntries.size()) {
+				return null;
+			}
+			return logEntries.get(index.intValue());
+		}
+		finally {
+			readWriteLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public List<LogEntry> getEntries(Long startIndex, Long endIndex) {
+		readWriteLock.readLock().lock();
+		try {
+			if (startIndex < 0 || startIndex >= logEntries.size()) {
+				return new ArrayList<>();
+			}
+			int end = Math.min(endIndex.intValue(), logEntries.size());
+			return new ArrayList<>(logEntries.subList(startIndex.intValue(), end));
+		}
+		finally {
+			readWriteLock.readLock().unlock();
+		}
 	}
 
 	@Override

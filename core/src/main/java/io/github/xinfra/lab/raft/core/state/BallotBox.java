@@ -21,8 +21,6 @@ public class BallotBox {
 		votedPeerIds.add(peerId);
 	}
 
-
-
 	public boolean isMajorityGranted() {
 		return hasVotingPeersMajority(configurationEntry.getConf(), votedPeerIds)
 				&& (configurationEntry.getOldConf() == null
