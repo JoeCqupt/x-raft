@@ -161,4 +161,12 @@ public class RaftNodeState {
 		// todo: notify state machine
 	}
 
+    public void notifyLogAppended() {
+        if (role == RaftRole.LEADER) {
+            if (leaderState != null) {
+                log.debug("node:{} notify log appended", xRaftNode.getRaftPeer());
+                leaderState.notifyLogChanged();
+            }
+        }
+    }
 }

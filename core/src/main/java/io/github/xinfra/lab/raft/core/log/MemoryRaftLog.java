@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MemoryRaftLog implements RaftLog {
-
+    private RaftNode raftNode;
 	List<LogEntry> logEntries = new ArrayList<>();
 
 	// todo: why use fair use true?
@@ -22,7 +22,7 @@ public class MemoryRaftLog implements RaftLog {
 	private AtomicReference<RaftMetadata> raftMetadataReference = new AtomicReference<>(RaftMetadata.getDefault());
 
 	public MemoryRaftLog(RaftNode raftNode) {
-		// todo
+		this.raftNode = raftNode;
 	}
 
 	@Override
@@ -57,6 +57,8 @@ public class MemoryRaftLog implements RaftLog {
 		readWriteLock.writeLock().lock();
 		try {
 			logEntries.add(logEntry);
+            // notify
+            raftNode.notifyLogAppended();
 		}
 		finally {
 			readWriteLock.writeLock().unlock();
@@ -101,6 +103,26 @@ public class MemoryRaftLog implements RaftLog {
 		}
 		finally {
 			readWriteLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public void truncateAfter(Long afterIndex) {
+		readWriteLock.writeLock().lock();
+		try {
+			if (afterIndex < 0) {
+				// 截断所有日志
+				logEntries.clear();
+			}
+			else if (afterIndex < logEntries.size() - 1) {
+				// 删除 afterIndex 之后的所有日志
+				// afterIndex + 1 是要保留的最后一个索引的下一个位置
+				logEntries.subList(afterIndex.intValue() + 1, logEntries.size()).clear();
+			}
+			// 如果 afterIndex >= logEntries.size() - 1，不需要做任何操作
+		}
+		finally {
+			readWriteLock.writeLock().unlock();
 		}
 	}
 

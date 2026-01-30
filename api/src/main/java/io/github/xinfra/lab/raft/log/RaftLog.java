@@ -37,4 +37,11 @@ public interface RaftLog extends Closeable {
 
 	Long getNextIndex();
 
+	/**
+	 * Truncate log entries after the specified index (exclusive). All entries with index
+	 * > afterIndex will be removed.
+	 * @param afterIndex the index after which to truncate (exclusive)
+	 */
+	void truncateAfter(Long afterIndex);
+
 }

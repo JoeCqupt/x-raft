@@ -155,13 +155,77 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 				}
 			}
 
-			// 7. Append new entries
-			// todo： follower日志截断
+			// 7. Append new entries with conflict resolution
+			// If an existing entry conflicts with a new one (same index but different
+			// terms),
+			// delete the existing entry and all that follow it (§5.3)
 			List<LogEntry> entries = appendEntriesRequest.getEntries();
 			if (entries != null && !entries.isEmpty()) {
-				for (LogEntry entry : entries) {
-					raftLog.append(entry);
-					log.debug("appended entry at index:{}, term:{}", entry.index(), entry.term());
+				// 验证日志条目的连续性
+				long expectedIndex = prevLogIndex + 1;
+				for (int i = 0; i < entries.size(); i++) {
+					LogEntry entry = entries.get(i);
+					if (entry.index() != expectedIndex) {
+						log.error(
+								"Log entries are not continuous, expected index:{}, actual index:{}, rejecting appendEntries from {}",
+								expectedIndex, entry.index(), appendEntriesRequest.getLeaderId());
+						response.setSuccess(false);
+						return response;
+					}
+					expectedIndex++;
+				}
+
+				// 处理日志冲突和追加
+				boolean conflictFound = false;
+				for (int i = 0; i < entries.size(); i++) {
+					LogEntry entry = entries.get(i);
+					long entryIndex = entry.index();
+
+					if (conflictFound) {
+						// 已经发现冲突并截断，直接追加后续所有日志
+						raftLog.append(entry);
+						log.debug("appended entry at index:{}, term:{} after conflict resolution", entry.index(),
+								entry.term());
+					}
+					else {
+						LogEntry existingEntry = raftLog.getEntry(entryIndex);
+
+						if (existingEntry != null) {
+							// 检查是否存在冲突
+							if (existingEntry.term() != entry.term()) {
+								// 发现冲突：删除该位置及之后的所有日志
+								log.warn(
+										"Log conflict detected at index:{}, existing term:{}, new term:{}, truncating logs after index:{}",
+										entryIndex, existingEntry.term(), entry.term(), entryIndex - 1);
+								raftLog.truncateAfter(entryIndex - 1);
+								conflictFound = true;
+
+								// 追加新日志
+								raftLog.append(entry);
+								log.debug("appended entry at index:{}, term:{} after truncation", entry.index(),
+										entry.term());
+							}
+							else {
+								// 相同的日志条目，跳过（幂等性）
+								log.debug("skipped duplicate entry at index:{}, term:{}", entry.index(), entry.term());
+							}
+						}
+						else {
+							// 该位置没有日志，验证是否连续
+							long lastLogIndex = raftLog.getLastEntryTermIndex().getIndex();
+							if (entryIndex != lastLogIndex + 1) {
+								log.error(
+										"Gap detected in log, last log index:{}, new entry index:{}, rejecting appendEntries from {}",
+										lastLogIndex, entryIndex, appendEntriesRequest.getLeaderId());
+								response.setSuccess(false);
+								return response;
+							}
+
+							// 直接追加
+							raftLog.append(entry);
+							log.debug("appended entry at index:{}, term:{}", entry.index(), entry.term());
+						}
+					}
 				}
 			}
 
@@ -207,7 +271,13 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return state.getRole();
 	}
 
-	@Override
+    @Override
+    public void notifyLogAppended() {
+        state.notifyLogAppended();
+    }
+
+
+    @Override
 	public void startup() {
 		super.startup();
 		// todo: init raft storage - check lock

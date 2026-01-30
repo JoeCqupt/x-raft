@@ -21,6 +21,15 @@ public class LeaderState {
 		this.xRaftNode = xRaftNode;
 	}
 
+	/**
+	 * 通知日志复制器组日志已变化 当 leader 添加新日志后应该调用此方法
+	 */
+	public void notifyLogChanged() {
+		if (logReplicatorGroup != null) {
+			logReplicatorGroup.notifyLogChanged();
+		}
+	}
+
 	public void startup() {
 		if (running) {
 			return;
@@ -30,9 +39,8 @@ public class LeaderState {
 
 		// set leader id to getRaftPeer id
 		xRaftNode.getState().resetLeaderId(xRaftNode.getRaftPeer().getRaftPeerId());
-		// append configurationEntry when leader startup
-		ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
-		xRaftNode.getState().getRaftLog().append(configurationEntry);
+
+        ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
 
 		// add log replicator
 		List<RaftPeer> raftPeers = configurationEntry.getPeers();
@@ -50,7 +58,9 @@ public class LeaderState {
 			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
 
-	}
+        // append configurationEntry when leader startup
+        xRaftNode.getState().getRaftLog().append(configurationEntry);
+    }
 
 	public void shutdown() {
 		if (!running) {
