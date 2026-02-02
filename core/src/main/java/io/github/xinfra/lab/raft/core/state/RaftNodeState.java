@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -92,7 +93,6 @@ public class RaftNodeState {
 		if (role == RaftRole.FOLLOWER) {
 			return;
 		}
-		role = RaftRole.FOLLOWER;
 		if (role == RaftRole.CANDIDATE) {
 			candidateState.shutdown();
 		}
@@ -102,6 +102,7 @@ public class RaftNodeState {
 		if (role == RaftRole.LEARNER) {
 			// todo
 		}
+		role = RaftRole.FOLLOWER;
 		followerState.startup();
 		log.info("node:{} change to follower", xRaftNode.getRaftPeer());
 	}
@@ -114,7 +115,7 @@ public class RaftNodeState {
 		log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
 		this.currentTerm = newTerm;
 		this.votedFor = null;
-        // todo handle IOException
+		// todo handle IOException
 		persistMetadata();
 		changeToFollower();
 	}
@@ -157,9 +158,16 @@ public class RaftNodeState {
 	}
 
 	public void resetLeaderId(String peerId) {
-		// todo implement
+		String oldLeaderId = this.leaderId;
+		this.leaderId = peerId;
 
-		// todo: notify state machine
+		if (!Objects.equals(oldLeaderId, peerId)) {
+			log.info("Leader changed from {} to {}", oldLeaderId, peerId);
+			// 通知状态机 Leader 变更
+			if (xRaftNode.getStateMachine() != null) {
+				xRaftNode.getStateMachine().onLeaderChange(peerId);
+			}
+		}
 	}
 
 	public void notifyLogAppended() {

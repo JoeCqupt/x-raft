@@ -2,6 +2,7 @@ package io.github.xinfra.lab.raft;
 
 import io.github.xinfra.lab.raft.conf.Configuration;
 import io.github.xinfra.lab.raft.log.RaftLogType;
+import io.github.xinfra.lab.raft.statemachine.StateMachine;
 import io.github.xinfra.lab.raft.transport.TransportClient;
 import io.github.xinfra.lab.raft.transport.TransportClientOptions;
 import io.github.xinfra.lab.raft.transport.TransportType;
@@ -29,6 +30,8 @@ public class RaftNodeOptions {
 	private RaftLogType raftLogType;
 
 	Configuration initialConf;
+
+	StateMachine stateMachine;
 
 	private Long electionTimeoutMills = 150L;
 

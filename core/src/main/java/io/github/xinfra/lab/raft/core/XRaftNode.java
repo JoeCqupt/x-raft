@@ -21,6 +21,7 @@ import io.github.xinfra.lab.raft.protocol.SetConfigurationRequest;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationResponse;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
 import io.github.xinfra.lab.raft.protocol.VoteResponse;
+import io.github.xinfra.lab.raft.statemachine.StateMachine;
 import io.github.xinfra.lab.raft.transport.TransportClient;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -42,10 +43,14 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Getter
 	private TransportClient transportClient;
 
+	@Getter
+	private StateMachine stateMachine;
+
 	public XRaftNode(String raftGroupId, RaftNodeOptions raftNodeOptions) {
 		this.raftGroupId = raftGroupId;
 		this.raftPeer = raftNodeOptions.getRaftPeer();
 		this.raftNodeOptions = raftNodeOptions;
+		this.stateMachine = raftNodeOptions.getStateMachine();
 		if (raftNodeOptions.isShareTransportClientFlag()) {
 			this.transportClient = raftNodeOptions.getShareTransportClient();
 		}

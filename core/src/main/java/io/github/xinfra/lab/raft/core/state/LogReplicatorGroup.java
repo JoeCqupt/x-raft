@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class LogReplicatorGroup {
@@ -72,6 +73,8 @@ public class LogReplicatorGroup {
 
 		private volatile boolean running = true;
 
+		private ReentrantLock lock = new ReentrantLock();
+
 		private final RaftPeer raftPeer;
 
 		/**
@@ -84,12 +87,24 @@ public class LogReplicatorGroup {
 		 */
 		private Long nextSendIndex;
 
+		/**
+		 * 当前任期
+		 */
 		private Long term;
 
+		/**
+		 * 领导人ID
+		 */
 		private String leaderId;
 
-		private Long matchIndex = 0L;
+		/**
+		 * 已匹配的日志索引
+		 */
+		private volatile Long matchIndex = 0L;
 
+		/**
+		 * 最后一次发送追加日志请求的时间
+		 */
 		private Long lastAppendSendTime;
 
 		/**
@@ -135,11 +150,19 @@ public class LogReplicatorGroup {
 			while (shouldRun()) {
 				try {
 					if (shouldAppend()) {
-						// 流水线模式：允许多个请求并发进行
-						if (canSendMoreRequests()) {
-							appendEntries();
+						boolean canSend = false;
+						try {
+							lock.lock();
+							// 流水线模式：允许多个请求并发进行
+							if (canSendMoreRequests()) {
+								canSend = true;
+								appendEntries();
+							}
 						}
-						else {
+						finally {
+							lock.unlock();
+						}
+						if (!canSend) {
 							// 流水线已满，等待一段时间后重试
 							Thread.sleep(10);
 						}
@@ -151,12 +174,14 @@ public class LogReplicatorGroup {
 							// 避免在等待期间错过通知
 							if (!shouldAppend()) {
 								// 等待通知，最多等待 100ms（作为保护机制，避免永久等待）
+								// TODO： 这个等待时间有问题：应该考虑心跳超时时间
 								logChangeNotifier.wait(100);
 							}
 						}
 					}
 				}
 				catch (InterruptedException e) {
+					log.error("LogReplicator interrupted", e);
 					Thread.currentThread().interrupt();
 					break;
 				}
@@ -371,6 +396,7 @@ public class LogReplicatorGroup {
 			@Override
 			public void onResponse(AppendEntriesResponse response) {
 				try {
+					lock.lock();
 					// 检查当前角色是否还是 Leader
 					if (xRaftNode.getState().getRole() != RaftRole.LEADER) {
 						log.warn(
@@ -431,6 +457,9 @@ public class LogReplicatorGroup {
 				}
 				catch (Exception e) {
 					log.error("AppendEntriesResponseCallBack error, sequence:{}", inflightRequest.sequence, e);
+				}
+				finally {
+					lock.unlock();
 				}
 			}
 
@@ -597,95 +626,112 @@ public class LogReplicatorGroup {
 
 			@Override
 			public void onException(Throwable throwable) {
-				// 从流水线队列中移除该请求
-				inflightRequests.remove(inflightRequest);
+				try {
+					lock.lock();
+					// 从流水线队列中移除该请求
+					inflightRequests.remove(inflightRequest);
 
-				log.error("AppendEntries to peer:{} exception, sequence:{}, startIndex:{}, endIndex:{}",
-						raftPeer.getRaftPeerId(), inflightRequest.sequence, inflightRequest.startIndex,
-						inflightRequest.endIndex, throwable);
+					log.error("AppendEntries to peer:{} exception, sequence:{}, startIndex:{}, endIndex:{}",
+							raftPeer.getRaftPeerId(), inflightRequest.sequence, inflightRequest.startIndex,
+							inflightRequest.endIndex, throwable);
 
-				// 发生异常，重置 nextIndex 到失败的起始位置，准备重试
-				nextIndex = inflightRequest.startIndex;
-				// 同步 nextSendIndex 到 nextIndex
-				nextSendIndex = nextIndex;
+					// 发生异常，重置 nextIndex 到失败的起始位置，准备重试
+					nextIndex = inflightRequest.startIndex;
+					// 同步 nextSendIndex 到 nextIndex
+					nextSendIndex = nextIndex;
 
-				// 清空流水线队列和待处理响应
-				inflightRequests.clear();
-				pendingResponses.clear();
+					// 清空流水线队列和待处理响应
+					inflightRequests.clear();
+					pendingResponses.clear();
 
-				// 进入探测模式
-				probing = true;
+					// 进入探测模式
+					probing = true;
 
-				// 重置序列号
-				nextSequence.set(inflightRequest.sequence);
-				nextResponseSequence.set(inflightRequest.sequence);
+					// 重置序列号
+					nextSequence.set(inflightRequest.sequence);
+					nextResponseSequence.set(inflightRequest.sequence);
 
-				log.info(
-						"Reset nextIndex to {} and nextSendIndex to {} and sequence to {} due to exception for peer:{}",
-						nextIndex, nextSendIndex, inflightRequest.sequence, raftPeer.getRaftPeerId());
+					log.info(
+							"Reset nextIndex to {} and nextSendIndex to {} and sequence to {} due to exception for peer:{}",
+							nextIndex, nextSendIndex, inflightRequest.sequence, raftPeer.getRaftPeerId());
+				}
+				catch (Exception e) {
+					log.error("AppendEntries to peer:{} exception, sequence:{}, startIndex:{}, endIndex:{}",
+							raftPeer.getRaftPeerId(), inflightRequest.sequence, inflightRequest.startIndex,
+							inflightRequest.endIndex, e);
+				}
+				finally {
+					lock.unlock();
+				}
 			}
 
 		}
 
-	}
+		/**
+		 * // todo： 优化 尝试推进 commitIndex 根据 Raft 论文 §5.3 和 §5.4： If there exists an N such
+		 * that N > commitIndex, a majority of matchIndex[i] ≥ N, and log[N].term ==
+		 * currentTerm: set commitIndex = N
+		 */
+		private void tryAdvanceCommitIndex() {
+			try {
+				xRaftNode.getState().getWriteLock().lock();
 
-	/**
-	 * // todo： 优化 尝试推进 commitIndex 根据 Raft 论文 §5.3 和 §5.4： If there exists an N such that
-	 * N > commitIndex, a majority of matchIndex[i] ≥ N, and log[N].term == currentTerm:
-	 * set commitIndex = N
-	 */
-	private void tryAdvanceCommitIndex() {
-		try {
-			xRaftNode.getState().getWriteLock().lock();
-
-			// 只有 Leader 才能推进 commitIndex
-			if (xRaftNode.getState().getRole() != RaftRole.LEADER) {
-				return;
-			}
-
-			RaftLog raftLog = xRaftNode.getState().getRaftLog();
-			Long currentCommitIndex = xRaftNode.getState().getCommitIndex();
-			Long lastLogIndex = raftLog.getLastEntryTermIndex().getIndex();
-
-			// 从 commitIndex + 1 开始，尝试找到可以提交的最大索引
-			for (long N = lastLogIndex; N > currentCommitIndex; N--) {
-				LogEntry logEntry = raftLog.getEntry(N);
-				if (logEntry == null) {
-					continue;
-				}
-
-				// 只能提交当前 term 的日志（Raft 论文 §5.4.2）
-				// 这是为了避免提交之前 term 的日志导致的安全性问题
-				if (logEntry.term() != xRaftNode.getState().getCurrentTerm()) {
-					continue;
-				}
-
-				// 统计有多少个节点已经复制了索引 N 的日志
-				int replicatedCount = 1; // Leader 自己算一个
-
-				for (LogReplicator replicator : logReplicators.values()) {
-					if (replicator.getMatchIndex() >= N) {
-						replicatedCount++;
-					}
-				}
-
-				// 获取集群配置
-				int clusterSize = xRaftNode.getState().getConfigState().getCurrentConfig().getConf().getPeers().size();
-
-				// 检查是否达到多数派
-				int majority = clusterSize / 2 + 1;
-				if (replicatedCount >= majority) {
-					// 找到了可以提交的索引 N
-					xRaftNode.getState().setCommitIndex(N);
-					log.info("Advanced commitIndex to {} (replicatedCount={}, majority={}, clusterSize={})", N,
-							replicatedCount, majority, clusterSize);
+				// 只有 Leader 才能推进 commitIndex
+				if (xRaftNode.getState().getRole() != RaftRole.LEADER) {
+					log.debug("Not a leader, cannot advance commitIndex");
 					return;
 				}
+
+				RaftLog raftLog = xRaftNode.getState().getRaftLog();
+				Long currentCommitIndex = xRaftNode.getState().getCommitIndex();
+				Long lastLogIndex = raftLog.getLastEntryTermIndex().getIndex();
+
+				// 从 commitIndex + 1 开始，尝试找到可以提交的最大索引
+				for (long N = lastLogIndex; N > currentCommitIndex; N--) {
+					LogEntry logEntry = raftLog.getEntry(N);
+					if (logEntry == null) {
+						continue;
+					}
+
+					// 只能提交当前 term 的日志（Raft 论文 §5.4.2）
+					// 这是为了避免提交之前 term 的日志导致的安全性问题
+					if (logEntry.term() != xRaftNode.getState().getCurrentTerm()) {
+						continue;
+					}
+
+					// 统计有多少个节点已经复制了索引 N 的日志
+					int replicatedCount = 1; // Leader 自己算一个
+
+					for (LogReplicator replicator : logReplicators.values()) {
+						if (replicator.getMatchIndex() >= N) {
+							replicatedCount++;
+						}
+					}
+
+					// 获取集群配置
+					int clusterSize = xRaftNode.getState()
+						.getConfigState()
+						.getCurrentConfig()
+						.getConf()
+						.getPeers()
+						.size();
+
+					// 检查是否达到多数派
+					int majority = clusterSize / 2 + 1;
+					if (replicatedCount >= majority) {
+						// 找到了可以提交的索引 N
+						xRaftNode.getState().setCommitIndex(N);
+						log.info("Advanced commitIndex to {} (replicatedCount={}, majority={}, clusterSize={})", N,
+								replicatedCount, majority, clusterSize);
+						return;
+					}
+				}
+			}
+			finally {
+				xRaftNode.getState().getWriteLock().unlock();
 			}
 		}
-		finally {
-			xRaftNode.getState().getWriteLock().unlock();
-		}
+
 	}
 
 }
