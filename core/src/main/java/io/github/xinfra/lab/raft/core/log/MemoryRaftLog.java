@@ -13,7 +13,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MemoryRaftLog implements RaftLog {
-    private RaftNode raftNode;
+
+	private RaftNode raftNode;
+
 	List<LogEntry> logEntries = new ArrayList<>();
 
 	// todo: why use fair use true?
@@ -57,8 +59,8 @@ public class MemoryRaftLog implements RaftLog {
 		readWriteLock.writeLock().lock();
 		try {
 			logEntries.add(logEntry);
-            // notify
-            raftNode.notifyLogAppended();
+			// notify
+			raftNode.notifyLogAppended();
 		}
 		finally {
 			readWriteLock.writeLock().unlock();

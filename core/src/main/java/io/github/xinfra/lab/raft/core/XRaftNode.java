@@ -200,6 +200,15 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 								raftLog.truncateAfter(entryIndex - 1);
 								conflictFound = true;
 
+								// 截断后需要检查并调整commitIndex,确保commitIndex不指向已删除的日志
+								if (state.getCommitIndex() >= entryIndex) {
+									// should never happen
+									long newCommitIndex = entryIndex - 1;
+									log.warn("Adjusting commitIndex from {} to {} after log truncation at index:{}",
+											state.getCommitIndex(), newCommitIndex, entryIndex);
+									state.setCommitIndex(newCommitIndex);
+								}
+
 								// 追加新日志
 								raftLog.append(entry);
 								log.debug("appended entry at index:{}, term:{} after truncation", entry.index(),
@@ -271,13 +280,12 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return state.getRole();
 	}
 
-    @Override
-    public void notifyLogAppended() {
-        state.notifyLogAppended();
-    }
+	@Override
+	public void notifyLogAppended() {
+		state.notifyLogAppended();
+	}
 
-
-    @Override
+	@Override
 	public void startup() {
 		super.startup();
 		// todo: init raft storage - check lock
@@ -340,9 +348,14 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 				return Responses.voteResponse(granted, term);
 			}
 
+			// 检查候选者的日志是否至少和自己一样新
+			// Raft论文§5.4.1: 日志新旧度比较规则
+			// 1. 如果候选者的lastLogTerm更大,则候选者日志更新
+			// 2. 如果term相同,则比较index,index更大或相等的更新
 			TermIndex lastEntryTermIndex = state.getRaftLog().getLastEntryTermIndex();
-			if (voteRequest.getLastLogIndex() >= lastEntryTermIndex.getIndex()
-					&& voteRequest.getLastLogTerm() >= lastEntryTermIndex.getTerm()) {
+			if (voteRequest.getLastLogTerm() > lastEntryTermIndex.getTerm()
+					|| (voteRequest.getLastLogTerm() == lastEntryTermIndex.getTerm()
+							&& voteRequest.getLastLogIndex() >= lastEntryTermIndex.getIndex())) {
 				granted = true;
 			}
 			return Responses.voteResponse(granted, term);
@@ -379,14 +392,32 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 				state.changeToFollower(voteRequest.getTerm());
 			}
 
+			// 检查候选者的日志是否至少和自己一样新
+			// Raft论文§5.4.1: 日志新旧度比较规则
+			// 1. 如果候选者的lastLogTerm更大,则候选者日志更新
+			// 2. 如果term相同,则比较index,index更大或相等的更新
 			TermIndex lastEntryTermIndex = state.getRaftLog().getLastEntryTermIndex();
-			if (voteRequest.getLastLogIndex() >= lastEntryTermIndex.getIndex()
-					&& voteRequest.getLastLogTerm() >= lastEntryTermIndex.getTerm()) {
+			boolean logIsUpToDate = voteRequest.getLastLogTerm() > lastEntryTermIndex.getTerm()
+					|| (voteRequest.getLastLogTerm() == lastEntryTermIndex.getTerm()
+							&& voteRequest.getLastLogIndex() >= lastEntryTermIndex.getIndex());
+
+			if (logIsUpToDate) {
 				if (StringUtils.isBlank(state.getVotedFor())) {
+					// 先持久化,成功后再修改内存状态,避免持久化失败导致状态不一致
 					state.setVotedFor(voteRequest.getCandidateId());
-					state.persistMetadata();
-					state.changeToFollower();
-					granted = true;
+					try {
+						state.persistMetadata();
+						// 持久化成功后才修改角色
+						state.changeToFollower();
+						granted = true;
+					}
+					catch (Exception e) {
+						// 持久化失败,回滚votedFor
+						log.error("Failed to persist metadata when voting for {}, rolling back vote",
+								voteRequest.getCandidateId(), e);
+						state.setVotedFor(null);
+						granted = false;
+					}
 				}
 				else if (state.getVotedFor().equals(voteRequest.getCandidateId())) {
 					granted = true;

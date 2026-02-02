@@ -96,10 +96,25 @@ public class CandidateState {
 		}
 
 		// update current term and votedFor
+		// 先持久化,成功后再继续选举流程,避免持久化失败导致状态不一致
 		long electionTerm = xRaftNode.getState().getCurrentTerm() + 1;
+		long oldTerm = xRaftNode.getState().getCurrentTerm();
+		String oldVotedFor = xRaftNode.getState().getVotedFor();
+
 		xRaftNode.getState().setCurrentTerm(electionTerm);
 		xRaftNode.getState().setVotedFor(xRaftNode.getRaftPeerId());
-		xRaftNode.getState().persistMetadata();
+
+		try {
+			xRaftNode.getState().persistMetadata();
+		}
+		catch (Exception e) {
+			// 持久化失败,回滚状态并退出选举
+			log.error("Failed to persist metadata during election, rolling back term from {} to {}", electionTerm,
+					oldTerm, e);
+			xRaftNode.getState().setCurrentTerm(oldTerm);
+			xRaftNode.getState().setVotedFor(oldVotedFor);
+			return;
+		}
 
 		TermIndex lastLogIndex = xRaftNode.getState().getRaftLog().getLastEntryTermIndex();
 

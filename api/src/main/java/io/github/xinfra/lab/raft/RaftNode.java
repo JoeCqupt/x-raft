@@ -16,5 +16,6 @@ public interface RaftNode extends LifeCycle, RaftServerService, RaftClientProtoc
 
 	RaftRole getRaftRole();
 
-    void notifyLogAppended();
+	void notifyLogAppended();
+
 }

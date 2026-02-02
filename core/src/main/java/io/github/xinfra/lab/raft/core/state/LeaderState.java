@@ -40,7 +40,7 @@ public class LeaderState {
 		// set leader id to getRaftPeer id
 		xRaftNode.getState().resetLeaderId(xRaftNode.getRaftPeer().getRaftPeerId());
 
-        ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
+		ConfigurationEntry configurationEntry = xRaftNode.getState().getConfigState().getCurrentConfig();
 
 		// add log replicator
 		List<RaftPeer> raftPeers = configurationEntry.getPeers();
@@ -58,9 +58,9 @@ public class LeaderState {
 			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
 
-        // append configurationEntry when leader startup
-        xRaftNode.getState().getRaftLog().append(configurationEntry);
-    }
+		// append configurationEntry when leader startup
+		xRaftNode.getState().getRaftLog().append(configurationEntry);
+	}
 
 	public void shutdown() {
 		if (!running) {

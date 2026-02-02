@@ -114,6 +114,7 @@ public class RaftNodeState {
 		log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
 		this.currentTerm = newTerm;
 		this.votedFor = null;
+        // todo handle IOException
 		persistMetadata();
 		changeToFollower();
 	}
@@ -161,12 +162,13 @@ public class RaftNodeState {
 		// todo: notify state machine
 	}
 
-    public void notifyLogAppended() {
-        if (role == RaftRole.LEADER) {
-            if (leaderState != null) {
-                log.debug("node:{} notify log appended", xRaftNode.getRaftPeer());
-                leaderState.notifyLogChanged();
-            }
-        }
-    }
+	public void notifyLogAppended() {
+		if (role == RaftRole.LEADER) {
+			if (leaderState != null) {
+				log.debug("node:{} notify log appended", xRaftNode.getRaftPeer());
+				leaderState.notifyLogChanged();
+			}
+		}
+	}
+
 }
