@@ -33,11 +33,11 @@ public class RaftNodeOptions {
 
 	StateMachine stateMachine;
 
-	private Long electionTimeoutMills = 150L;
+	private Long electionTimeoutMills = 1500L;
 
-	private Long electionTimeoutDelayMills = 150L;
+	private Long electionTimeoutDelayMills = 1500L;
 
-	private Long rpcTimeoutMills = 100L;
+	private Long rpcTimeoutMills = 1000L;
 
 	public Long getRandomElectionTimeoutMills() {
 		return ThreadLocalRandom.current()

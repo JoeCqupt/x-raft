@@ -1,8 +1,10 @@
 package io.github.xinfra.lab.raft.protocol;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
 public class VoteRequest extends RaftGroupAware {
 
 	private boolean preVote;

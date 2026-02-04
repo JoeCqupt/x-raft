@@ -3,6 +3,7 @@ package io.github.xinfra.lab.raft.transport;
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
 import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.exception.RaftException;
+import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.protocol.RaftGroupAware;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -69,6 +70,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	@Override
 	public <T, R> void asyncCall(RequestApi requestApi, T request, SocketAddress socketAddress, CallOptions callOptions,
 			ResponseCallBack<R> callBack) throws Exception {
+		log.info("asyncCall request: {} {}", requestApi, request);
 		long requestId = requestIdGenerator.incrementAndGet();
 		responseCallBackMap.put(requestId, callBack);
 
@@ -103,6 +105,13 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 					voteResponse = raftNode.handleVoteRequest(voteRequest);
 				}
 				response(requestId, voteResponse);
+				return;
+			}
+			else if (requestApi == appendEntries) {
+				AppendEntriesResponse appendEntriesResponse = raftNode
+					.handleAppendEntries((AppendEntriesRequest) request);
+				response(requestId, appendEntriesResponse);
+				return;
 			}
 			throw new IllegalStateException("not support api: " + requestApi);
 		}
@@ -113,6 +122,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	}
 
 	public void response(long requestId, Object response) {
+		log.info("asyncCall response: {}", response);
 		ResponseCallBack responseCallBack = responseCallBackMap.remove(requestId);
 		if (responseCallBack != null) {
 			responseCallBack.onResponse(response);
@@ -120,20 +130,11 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	}
 
 	public void exception(long requestId, Throwable throwable) {
+		log.error("asyncCall exception: {}", throwable.getMessage());
 		ResponseCallBack responseCallBack = responseCallBackMap.remove(requestId);
 		if (responseCallBack != null) {
 			responseCallBack.onException(throwable);
 		}
-	}
-
-	public ResponseMessage createResponse(RequestApi requestApi) {
-		if (requestApi.equals(requestVote)) {
-			return new VoteResponse();
-		}
-		else if (requestApi.equals(appendEntries)) {
-			return new AppendEntriesResponse();
-		}
-		throw new IllegalStateException("not support api: " + requestApi);
 	}
 
 }

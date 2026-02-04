@@ -69,6 +69,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public AppendEntriesResponse handleAppendEntries(AppendEntriesRequest appendEntriesRequest) {
 		try {
+			log.info("node:{} receive appendEntries request: {}", getRaftGroupPeerId(), appendEntriesRequest);
 			state.getWriteLock().lock();
 
 			AppendEntriesResponse response = new AppendEntriesResponse();
@@ -329,6 +330,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public VoteResponse handlePreVoteRequest(VoteRequest voteRequest) {
 		try {
+			log.info("node:{} receive preVoteRequest", getRaftGroupPeerId(), voteRequest);
 			state.getWriteLock().lock();
 			boolean granted = false;
 			Long term = state.getCurrentTerm();
@@ -373,6 +375,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	@Override
 	public VoteResponse handleVoteRequest(VoteRequest voteRequest) {
 		try {
+			log.info("node:{} receive voteRequest", getRaftGroupPeerId(), voteRequest);
 			state.getWriteLock().lock();
 			boolean granted = false;
 			Long term = state.getCurrentTerm();

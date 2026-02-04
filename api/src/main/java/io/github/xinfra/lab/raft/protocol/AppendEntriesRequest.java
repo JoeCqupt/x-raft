@@ -1,13 +1,15 @@
 package io.github.xinfra.lab.raft.protocol;
 
 import io.github.xinfra.lab.raft.log.LogEntry;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.List;
 
-@Setter
-@Getter
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class AppendEntriesRequest extends RaftGroupAware {
 
 	private Long term;

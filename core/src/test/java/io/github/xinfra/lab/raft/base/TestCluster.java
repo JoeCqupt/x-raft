@@ -1,5 +1,6 @@
 package io.github.xinfra.lab.raft.base;
 
+import io.github.xinfra.lab.raft.statemachine.NOOPStateMachine;
 import io.github.xinfra.lab.raft.RaftGroup;
 import io.github.xinfra.lab.raft.RaftGroupOptions;
 import io.github.xinfra.lab.raft.RaftNode;
@@ -90,6 +91,7 @@ public class TestCluster {
 			raftNodeOptions.setShareTransportClient(transportClient);
 			raftNodeOptions.setInitialConf(new Configuration(raftPeers, new ArrayList<>()));
 			raftNodeOptions.setRaftLogType(MemoryRaftLogType.memory);
+			raftNodeOptions.setStateMachine(NOOPStateMachine.INSTANCE);
 
 			RaftGroupOptions raftGroupOptions = new RaftGroupOptions();
 			raftGroupOptions.setRaftNodeOptions(raftNodeOptions);
@@ -124,7 +126,10 @@ public class TestCluster {
 	public String printRaftNodes() {
 		StringBuilder sb = new StringBuilder();
 		for (RaftNode raftNode : raftNodes) {
-			sb.append(raftNode.getRaftPeer()).append(":").append(raftNode.getRaftRole()).append(System.lineSeparator());
+			sb.append(raftNode.getRaftGroupPeerId())
+				.append(":")
+				.append(raftNode.getRaftRole())
+				.append(System.lineSeparator());
 		}
 		return sb.toString();
 	}

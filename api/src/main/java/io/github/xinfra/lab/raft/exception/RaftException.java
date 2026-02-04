@@ -1,8 +1,14 @@
 package io.github.xinfra.lab.raft.exception;
 
+import io.github.xinfra.lab.raft.common.RaftErrorCode;
+
 public class RaftException extends RuntimeException {
 
 	private int errorCode;
+
+	public RaftException(RaftErrorCode raftErrorCode) {
+		this(raftErrorCode.getCode(), raftErrorCode.getMsg());
+	}
 
 	public RaftException(int errorCode, String message) {
 		super(message);

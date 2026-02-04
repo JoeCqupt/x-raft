@@ -105,7 +105,7 @@ public class LogReplicatorGroup {
 		/**
 		 * 最后一次发送追加日志请求的时间
 		 */
-		private Long lastAppendSendTime;
+		private Long lastAppendSendTime = 0L;
 
 		/**
 		 * 流水线中正在进行的请求队列 用于保障复制的顺序性
