@@ -135,7 +135,7 @@ public class CandidateState {
 			voteRequest.setLastLogIndex(lastLogIndex.getIndex());
 			voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
-            log.info("node:{} send vote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
+			log.info("node:{} send vote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			VoteResponseCallBack callBack = new VoteResponseCallBack(electionTerm, raftPeer, voteBallotBox);
 			xRaftNode.getTransportClient()
 				.asyncCall(RaftApi.requestVote, voteRequest, raftPeer.getAddress(), callOptions, callBack);
@@ -179,7 +179,8 @@ public class CandidateState {
 					return;
 				}
 				if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
-					log.warn("raftPeer:{} VoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
+					log.warn("raftPeer:{} VoteResponseCallBack response term is newer:{}", raftPeer,
+							response.getTerm());
 					xRaftNode.getState().changeToFollower(response.getTerm());
 					return;
 				}

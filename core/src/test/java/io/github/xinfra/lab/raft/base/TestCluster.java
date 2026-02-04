@@ -18,6 +18,7 @@ import io.github.xinfra.lab.raft.transport.TransportClient;
 import io.github.xinfra.lab.raft.transport.TransportClientOptions;
 import io.github.xinfra.lab.raft.transport.TransportServerOptions;
 import io.github.xinfra.lab.raft.transport.TransportType;
+import lombok.Getter;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.List;
 /**
  * 1 raft group + N raft server + N raft nodes
  */
+@Getter
 public class TestCluster {
 
 	private String raftGroupId;
@@ -45,6 +47,7 @@ public class TestCluster {
 	List<RaftServer> raftServers = new ArrayList<>();
 
 	List<RaftNode> raftNodes = new ArrayList<>();
+
 
 	public TestCluster(String raftGroupId, int peerNums) {
 		this.raftGroupId = raftGroupId;

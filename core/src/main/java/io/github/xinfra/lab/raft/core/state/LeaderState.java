@@ -48,7 +48,7 @@ public class LeaderState {
 			if (Objects.equals(raftPeer.getRaftPeerId(), xRaftNode.getRaftPeerId())) {
 				continue;
 			}
-            log.info("node:{} add log replicator {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
+			log.info("node:{} add log replicator {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
 		List<RaftPeer> learners = configurationEntry.getLearners();
@@ -56,7 +56,7 @@ public class LeaderState {
 			if (Objects.equals(raftPeer.getRaftPeerId(), xRaftNode.getRaftPeerId())) {
 				continue;
 			}
-            log.info("node:{} add learner log replicator {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
+			log.info("node:{} add learner log replicator {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			logReplicatorGroup.addLogReplicator(raftPeer);
 		}
 

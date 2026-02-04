@@ -125,7 +125,7 @@ public class FollowerState {
 			voteRequest.setLastLogIndex(lastLogIndex.getIndex());
 			voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
-            log.info("node:{} send preVote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
+			log.info("node:{} send preVote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(term, raftPeer, preVoteBallotBox);
 			xRaftNode.getTransportClient()
 				.asyncCall(RaftApi.requestVote, voteRequest, raftPeer.getAddress(), callOptions, callBack);
@@ -169,7 +169,8 @@ public class FollowerState {
 					return;
 				}
 				if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
-					log.warn("raftPeer:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
+					log.warn("raftPeer:{} PreVoteResponseCallBack response term is newer:{}", raftPeer,
+							response.getTerm());
 					xRaftNode.getState().changeToFollower(response.getTerm());
 					return;
 				}
