@@ -102,9 +102,9 @@ public class RaftNodeState {
 		if (role == RaftRole.LEARNER) {
 			// todo
 		}
+        log.info("node:{} change to follower", xRaftNode.getRaftGroupPeerId());
 		role = RaftRole.FOLLOWER;
 		followerState.startup();
-		log.info("node:{} change to follower", xRaftNode.getRaftPeer());
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class RaftNodeState {
 	 * @param newTerm
 	 */
 	public void changeToFollower(Long newTerm) {
-		log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftPeer(), newTerm);
+		log.info("node:{} change to follower, new term:{}", xRaftNode.getRaftGroupPeerId(), newTerm);
 		this.currentTerm = newTerm;
 		this.votedFor = null;
 		// todo handle IOException
@@ -124,20 +124,20 @@ public class RaftNodeState {
 		if (role == RaftRole.CANDIDATE) {
 			return;
 		}
+        log.info("node:{} change to candidate", xRaftNode.getRaftGroupPeerId());
 		role = RaftRole.CANDIDATE;
 		followerState.shutdown();
 		candidateState.startup();
-		log.info("node:{} change to candidate", xRaftNode.getRaftPeer());
 	}
 
 	public void changeToLeader() {
 		if (role == RaftRole.LEADER) {
 			return;
 		}
+        log.info("node:{} change to leader", xRaftNode.getRaftGroupPeerId());
 		role = RaftRole.LEADER;
 		candidateState.shutdown();
 		leaderState.startup();
-		log.info("node:{} change to leader", xRaftNode.getRaftPeer());
 	}
 
 	public void changeToLearner() {
@@ -146,7 +146,7 @@ public class RaftNodeState {
 		}
 		role = RaftRole.LEARNER;
 		learnerState.startup();
-		log.info("node:{} change to learner", xRaftNode.getRaftPeer());
+		log.info("node:{} change to learner", xRaftNode.getRaftGroupPeerId());
 	}
 
 	public void persistMetadata() {
@@ -173,7 +173,7 @@ public class RaftNodeState {
 	public void notifyLogAppended() {
 		if (role == RaftRole.LEADER) {
 			if (leaderState != null) {
-				log.debug("node:{} notify log appended", xRaftNode.getRaftPeer());
+				log.info("node:{} notify log appended", xRaftNode.getRaftGroupPeerId());
 				leaderState.notifyLogChanged();
 			}
 		}

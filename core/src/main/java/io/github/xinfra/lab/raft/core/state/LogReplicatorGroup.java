@@ -42,7 +42,7 @@ public class LogReplicatorGroup {
 	public void notifyLogChanged() {
 		synchronized (logChangeNotifier) {
 			logChangeNotifier.notifyAll();
-			log.debug("Notified all LogReplicators about log change");
+			log.debug("LogReplicatorGroup notify all LogReplicators about log change");
 		}
 	}
 
@@ -138,7 +138,8 @@ public class LogReplicatorGroup {
 		private volatile boolean probing = false;
 
 		public LogReplicator(RaftPeer raftPeer, Long nextIndex, Long term, String leaderId) {
-			this.raftPeer = raftPeer;
+			super("raft-log-replicator-" + raftPeer.getRaftPeerId());
+            this.raftPeer = raftPeer;
 			this.nextIndex = nextIndex;
 			this.nextSendIndex = nextIndex;
 			this.term = term;
@@ -263,16 +264,17 @@ public class LogReplicatorGroup {
 				// 注意：这里只更新发送位置，不更新确认位置 nextIndex
 				nextSendIndex = endIndex;
 
+                log.info("LogReplicator send appendEntries to peer:{}, sequence:{}, startIndex:{}, endIndex:{}, entriesSize:{}",
+                        raftPeer, sequence, startIndex, endIndex, entries.size());
+
 				xRaftNode.getTransportClient()
 					.asyncCall(RaftApi.appendEntries, request, raftPeer.getAddress(), callOptions,
 							new AppendEntriesResponseCallBack(term, raftPeer, inflightRequest));
 
-				log.debug("Sent appendEntries to peer:{}, sequence:{}, startIndex:{}, endIndex:{}, entriesSize:{}",
-						raftPeer.getRaftPeerId(), sequence, startIndex, endIndex, entries.size());
 				lastAppendSendTime = System.currentTimeMillis();
 			}
 			catch (Exception e) {
-				log.error("Failed to send appendEntries to peer: {}", raftPeer.getRaftPeerId(), e);
+				log.error("LogReplicator failed to send appendEntries to peer: {}", raftPeer, e);
 				// 发送失败，从队列中移除
 				inflightRequests.remove(inflightRequest);
 				// 恢复 nextSendIndex
@@ -396,6 +398,8 @@ public class LogReplicatorGroup {
 			@Override
 			public void onResponse(AppendEntriesResponse response) {
 				try {
+                    log.info("LogReplicator received appendEntries response from peer:{}, sequence:{}, response:{}",
+                            raftPeer, inflightRequest.sequence, response);
 					lock.lock();
 					// 检查当前角色是否还是 Leader
 					if (xRaftNode.getState().getRole() != RaftRole.LEADER) {
@@ -627,6 +631,7 @@ public class LogReplicatorGroup {
 			@Override
 			public void onException(Throwable throwable) {
 				try {
+                    log.info("LogReplicator onException to peer:{}", raftPeer);
 					lock.lock();
 					// 从流水线队列中移除该请求
 					inflightRequests.remove(inflightRequest);

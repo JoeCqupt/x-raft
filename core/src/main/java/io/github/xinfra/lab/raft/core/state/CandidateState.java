@@ -86,12 +86,12 @@ public class CandidateState {
 	}
 
 	private void vote() throws Exception {
-		log.info("node:{} ask for votes", xRaftNode.getRaftPeer());
+		log.info("node:{} ask for votes", xRaftNode.getRaftGroupPeerId());
 		xRaftNode.getState().resetLeaderId(null);
 
 		ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
 		if (config.getRaftPeer(xRaftNode.getRaftPeerId()) == null) {
-			log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeerId());
+			log.warn("node:{} is not in the raft group", xRaftNode.getRaftGroupPeerId());
 			return;
 		}
 
@@ -135,6 +135,7 @@ public class CandidateState {
 			voteRequest.setLastLogIndex(lastLogIndex.getIndex());
 			voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
+            log.info("node:{} send vote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			VoteResponseCallBack callBack = new VoteResponseCallBack(electionTerm, raftPeer, voteBallotBox);
 			xRaftNode.getTransportClient()
 				.asyncCall(RaftApi.requestVote, voteRequest, raftPeer.getAddress(), callOptions, callBack);
@@ -165,28 +166,28 @@ public class CandidateState {
 			try {
 				xRaftNode.getState().getWriteLock().lock();
 				if (xRaftNode.getState().getRole() != RaftRole.CANDIDATE) {
-					log.warn("node:{} VoteResponseCallBack exist, current role is {}", raftPeer,
+					log.warn("raftPeer:{} VoteResponseCallBack exist, current role is {}", raftPeer,
 							xRaftNode.getState().getRole());
 					return;
 				}
 				if (term != xRaftNode.getState().getCurrentTerm()) {
-					log.warn("node:{} VoteResponseCallBack is outdated", raftPeer);
+					log.warn("raftPeer:{} VoteResponseCallBack is outdated", raftPeer);
 					return;
 				}
 				if (ballotBox != voteBallotBox) {
-					log.warn("node:{} VoteResponseCallBack is outdated", raftPeer);
+					log.warn("raftPeer:{} VoteResponseCallBack is outdated", raftPeer);
 					return;
 				}
 				if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
-					log.warn("node:{} VoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
+					log.warn("raftPeer:{} VoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
 					xRaftNode.getState().changeToFollower(response.getTerm());
 					return;
 				}
 				if (response.isVoteGranted()) {
-					log.info("node:{} VoteResponseCallBack response granted", raftPeer);
+					log.info("raftPeer:{} VoteResponseCallBack response granted", raftPeer);
 					ballotBox.grantVote(raftPeer.getRaftPeerId());
 					if (ballotBox.isMajorityGranted()) {
-						log.info("node:{} VoteResponseCallBack majority granted. change to leader", raftPeer);
+						log.info("raftPeer:{} VoteResponseCallBack majority granted. change to leader", raftPeer);
 						xRaftNode.getState().changeToLeader();
 					}
 				}
@@ -198,7 +199,7 @@ public class CandidateState {
 
 		@Override
 		public void onException(Throwable throwable) {
-			log.error("node:{} VoteResponseCallBack error", raftPeer.getRaftPeerId(), throwable);
+			log.error("raftPeer:{} VoteResponseCallBack error", raftPeer, throwable);
 		}
 
 	}

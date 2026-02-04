@@ -102,7 +102,7 @@ public class FollowerState {
 
 		ConfigurationEntry config = xRaftNode.getState().getConfigState().getCurrentConfig();
 		if (config.getRaftPeer(xRaftNode.getRaftPeerId()) == null) {
-			log.warn("node:{} is not in the raft group", xRaftNode.getRaftPeerId());
+			log.warn("node:{} is not in the raft group", xRaftNode.getRaftGroupPeerId());
 			return;
 		}
 
@@ -125,6 +125,7 @@ public class FollowerState {
 			voteRequest.setLastLogIndex(lastLogIndex.getIndex());
 			voteRequest.setLastLogTerm(lastLogIndex.getTerm());
 
+            log.info("node:{} send preVote to {}", xRaftNode.getRaftGroupPeerId(), raftPeer);
 			PreVoteResponseCallBack callBack = new PreVoteResponseCallBack(term, raftPeer, preVoteBallotBox);
 			xRaftNode.getTransportClient()
 				.asyncCall(RaftApi.requestVote, voteRequest, raftPeer.getAddress(), callOptions, callBack);
@@ -155,28 +156,28 @@ public class FollowerState {
 			try {
 				xRaftNode.getState().getWriteLock().lock();
 				if (xRaftNode.getState().getRole() != RaftRole.FOLLOWER) {
-					log.info("node:{} PreVoteResponseCallBack exit, current role is {}", raftPeer,
+					log.info("raftPeer:{} PreVoteResponseCallBack exit, current role is {}", raftPeer,
 							xRaftNode.getState().getRole());
 					return;
 				}
 				if (term != xRaftNode.getState().getCurrentTerm()) {
-					log.warn("node:{} PreVoteResponseCallBack is outdated", raftPeer);
+					log.warn("raftPeer:{} PreVoteResponseCallBack is outdated", raftPeer);
 					return;
 				}
 				if (ballotBox != preVoteBallotBox) {
-					log.warn("node:{} PreVoteResponseCallBack is outdated", raftPeer);
+					log.warn("raftPeer:{} PreVoteResponseCallBack is outdated", raftPeer);
 					return;
 				}
 				if (response.getTerm() > xRaftNode.getState().getCurrentTerm()) {
-					log.warn("node:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
+					log.warn("raftPeer:{} PreVoteResponseCallBack response term is newer:{}", raftPeer, response.getTerm());
 					xRaftNode.getState().changeToFollower(response.getTerm());
 					return;
 				}
 				if (response.isVoteGranted()) {
-					log.info("node:{} PreVoteResponseCallBack vote granted", raftPeer);
+					log.info("raftPeer:{} PreVoteResponseCallBack vote granted", raftPeer);
 					ballotBox.grantVote(raftPeer.getRaftPeerId());
 					if (ballotBox.isMajorityGranted()) {
-						log.info("node:{} PreVoteResponseCallBack majority vote granted. change to candicate",
+						log.info("raftPeer:{} PreVoteResponseCallBack majority vote granted. change to candidate",
 								raftPeer);
 						xRaftNode.getState().changeToCandidate();
 					}
@@ -189,7 +190,7 @@ public class FollowerState {
 
 		@Override
 		public void onException(Throwable throwable) {
-			log.warn("node:{} PreVoteResponseCallBack error:{}", raftPeer, throwable);
+			log.warn("raftPeer:{} PreVoteResponseCallBack error:{}", raftPeer, throwable);
 		}
 
 	}
