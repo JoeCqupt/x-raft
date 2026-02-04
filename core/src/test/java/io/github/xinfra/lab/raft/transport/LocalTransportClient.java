@@ -71,7 +71,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	@Override
 	public <T, R> void asyncCall(RequestApi requestApi, T request, SocketAddress socketAddress, CallOptions callOptions,
 			ResponseCallBack<R> callBack) throws Exception {
-		log.info("asyncCall request: {} {}", requestApi, request);
+		log.info("asyncCall request: {} {} {}", requestApi, request, callOptions);
 		long requestId = requestIdGenerator.incrementAndGet();
 		responseCallBackMap.put(requestId, callBack);
 
@@ -82,7 +82,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 		try {
 			// random delay
-			// TimeUnit.MILLISECONDS.sleep(RandomUtils.nextLong(10, 50));
+//			 TimeUnit.MILLISECONDS.sleep(10);
 
 			RaftGroupAware raftGroupAware = (RaftGroupAware) request;
 			String requestRaftGroupId = raftGroupAware.getRaftGroupId();
