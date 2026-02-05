@@ -15,7 +15,9 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,8 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 	private Map<Long, ResponseCallBack> responseCallBackMap = new ConcurrentHashMap<>();
 
 	ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+
+    ExecutorService callExecutor = Executors.newCachedThreadPool();
 
 	public void setRaftNodes(List<RaftNode> raftNodes) {
 		this.raftNodes = raftNodes;
@@ -80,51 +84,57 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 			exception(requestId, new TimeoutException("timeout"));
 		}, callOptions.getTimeoutMs(), TimeUnit.MILLISECONDS);
 
-		try {
-			// random delay
-//			 TimeUnit.MILLISECONDS.sleep(10);
+		callExecutor.execute(
+                () -> simulateCall(requestId, requestApi, request, timeout)
+        );
+	}
 
-			RaftGroupAware raftGroupAware = (RaftGroupAware) request;
-			String requestRaftGroupId = raftGroupAware.getRaftGroupId();
-			String requestPeerId = raftGroupAware.getRaftPeerId();
-			RaftNode raftNode = raftNodes.stream()
-				.filter(node -> node.getRaftGroupId().equals(requestRaftGroupId)
-						&& node.getRaftPeer().getRaftPeerId().equals(requestPeerId))
-				.findFirst()
-				.get();
-			if (raftNode == null) {
-				throw new RaftException(NODE_NOT_FOUND);
-			}
+    public void simulateCall(long requestId, RequestApi requestApi, Object request, Future<?> timeout) {
+        try {
+            // random delay
+			 TimeUnit.MILLISECONDS.sleep(RandomUtils.nextLong(10, 30));
 
-			Object response = null;
-			if (requestApi == requestVote) {
-				VoteRequest voteRequest = (VoteRequest) request;
-				VoteResponse voteResponse;
-				if (voteRequest.isPreVote()) {
-					voteResponse = raftNode.handlePreVoteRequest(voteRequest);
-				}
-				else {
-					voteResponse = raftNode.handleVoteRequest(voteRequest);
-				}
-				response = voteResponse;
+            RaftGroupAware raftGroupAware = (RaftGroupAware) request;
+            String requestRaftGroupId = raftGroupAware.getRaftGroupId();
+            String requestPeerId = raftGroupAware.getRaftPeerId();
+            RaftNode raftNode = raftNodes.stream()
+                    .filter(node -> node.getRaftGroupId().equals(requestRaftGroupId)
+                            && node.getRaftPeer().getRaftPeerId().equals(requestPeerId))
+                    .findFirst()
+                    .get();
+            if (raftNode == null) {
+                throw new RaftException(NODE_NOT_FOUND);
+            }
 
-			}
-			else if (requestApi == appendEntries) {
-				AppendEntriesResponse appendEntriesResponse = raftNode
-					.handleAppendEntries((AppendEntriesRequest) request);
-				response = appendEntriesResponse;
-			}
-			else {
-				throw new IllegalStateException("not support api: " + requestApi);
-			}
-			timeout.cancel(true);
-			response(requestId, response);
-		}
-		catch (Exception e) {
-			log.error("asyncCall ex", e);
-			timeout.cancel(true);
-			exception(requestId, e);
-		}
+            Object response = null;
+            if (requestApi == requestVote) {
+                VoteRequest voteRequest = (VoteRequest) request;
+                VoteResponse voteResponse;
+                if (voteRequest.isPreVote()) {
+                    voteResponse = raftNode.handlePreVoteRequest(voteRequest);
+                }
+                else {
+                    voteResponse = raftNode.handleVoteRequest(voteRequest);
+                }
+                response = voteResponse;
+
+            }
+            else if (requestApi == appendEntries) {
+                AppendEntriesResponse appendEntriesResponse = raftNode
+                        .handleAppendEntries((AppendEntriesRequest) request);
+                response = appendEntriesResponse;
+            }
+            else {
+                throw new IllegalStateException("not support api: " + requestApi);
+            }
+            timeout.cancel(true);
+            response(requestId, response);
+        }
+        catch (Exception e) {
+            log.error("asyncCall ex", e);
+            timeout.cancel(true);
+            exception(requestId, e);
+        }
 	}
 
 	public void response(long requestId, Object response) {
