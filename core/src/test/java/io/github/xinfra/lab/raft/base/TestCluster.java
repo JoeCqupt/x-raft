@@ -48,7 +48,6 @@ public class TestCluster {
 
 	List<RaftNode> raftNodes = new ArrayList<>();
 
-
 	public TestCluster(String raftGroupId, int peerNums) {
 		this.raftGroupId = raftGroupId;
 		this.peerNums = peerNums;
@@ -105,6 +104,15 @@ public class TestCluster {
 			raftNodes.add(raftGroup.getRaftNode());
 		}
 
+	}
+
+	public void shutdown() {
+		for (RaftNode raftNode : raftNodes) {
+			raftNode.shutdown();
+		}
+		for (RaftServer raftServer : raftServers) {
+			raftServer.shutdown();
+		}
 	}
 
 	private TransportClient createTransportClient() {

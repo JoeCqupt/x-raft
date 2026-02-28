@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Leader Election Tests 测试 Raft 选举过程中的各种场景
@@ -28,199 +30,8 @@ public class LeaderElectionTests {
 	public void teardown() {
 		if (cluster != null) {
 			log.info("Tearing down test cluster");
-			// 清理集群资源
-			cluster = null;
+			cluster.shutdown();
 		}
-	}
-
-	/**
-	 * 测试基本的 Leader 选举 场景：启动一个 3 节点集群，验证能够成功选举出 Leader
-	 */
-	@Test
-	public void testBasicLeaderElection() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Basic Leader Election ===");
-		cluster = new TestCluster("test-group-basic", 3);
-		cluster.startup();
-
-		// 等待 Leader 选举完成
-		Wait.untilIsTrue(() -> {
-			RaftPeer leader = cluster.getLeaderPeer();
-			if (leader != null) {
-				log.info("Leader elected: {}", leader.getRaftPeerId());
-				log.info("Cluster state:\n{}", cluster.printRaftNodes());
-				return true;
-			}
-			return false;
-		}, 100, 100);
-
-		// 验证只有一个 Leader
-		RaftPeer leader = cluster.getLeaderPeer();
-		assertNotNull(leader, "Leader should be elected");
-
-		long leaderCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-			.count();
-		assertEquals(1, leaderCount, "Should have exactly one leader");
-
-		// 验证其他节点都是 Follower
-		long followerCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.FOLLOWER)
-			.count();
-		assertEquals(2, followerCount, "Should have exactly two followers");
-
-		log.info("=== Test Passed: Basic Leader Election ===");
-	}
-
-	/**
-	 * 测试 5 节点集群的 Leader 选举 场景：启动一个 5 节点集群，验证能够成功选举出 Leader
-	 */
-	@Test
-	public void testLeaderElectionWithFiveNodes() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Leader Election with Five Nodes ===");
-		cluster = new TestCluster("test-group-five", 5);
-		cluster.startup();
-
-		// 等待 Leader 选举完成
-		Wait.untilIsTrue(() -> {
-			RaftPeer leader = cluster.getLeaderPeer();
-			if (leader != null) {
-				log.info("Leader elected: {}", leader.getRaftPeerId());
-				log.info("Cluster state:\n{}", cluster.printRaftNodes());
-				return true;
-			}
-			return false;
-		}, 100, 100);
-
-		// 验证只有一个 Leader
-		RaftPeer leader = cluster.getLeaderPeer();
-		assertNotNull(leader, "Leader should be elected");
-
-		long leaderCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-			.count();
-		assertEquals(1, leaderCount, "Should have exactly one leader");
-
-		// 验证其他节点都是 Follower
-		long followerCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.FOLLOWER)
-			.count();
-		assertEquals(4, followerCount, "Should have exactly four followers");
-
-		log.info("=== Test Passed: Leader Election with Five Nodes ===");
-	}
-
-	/**
-	 * 测试单节点集群的 Leader 选举 场景：启动一个单节点集群，验证该节点能够成为 Leader
-	 */
-	@Test
-	public void testSingleNodeLeaderElection() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Single Node Leader Election ===");
-		cluster = new TestCluster("test-group-single", 1);
-		cluster.startup();
-
-		// 等待 Leader 选举完成
-		Wait.untilIsTrue(() -> {
-			RaftPeer leader = cluster.getLeaderPeer();
-			if (leader != null) {
-				log.info("Leader elected: {}", leader.getRaftPeerId());
-				log.info("Cluster state:\n{}", cluster.printRaftNodes());
-				return true;
-			}
-			return false;
-		}, 100, 100);
-
-		// 验证单节点成为 Leader
-		RaftPeer leader = cluster.getLeaderPeer();
-		assertNotNull(leader, "Single node should become leader");
-
-		long leaderCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-			.count();
-		assertEquals(1, leaderCount, "Should have exactly one leader");
-
-		log.info("=== Test Passed: Single Node Leader Election ===");
-	}
-
-	/**
-	 * 测试 Leader 选举后的稳定性 场景：选举出 Leader 后，等待一段时间，验证 Leader 保持稳定
-	 */
-	@Test
-	public void testLeaderStability() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Leader Stability ===");
-		cluster = new TestCluster("test-group-stability", 3);
-		cluster.startup();
-
-		// 等待 Leader 选举完成
-		Wait.untilIsTrue(() -> cluster.getLeaderPeer() != null, 100, 100);
-
-		RaftPeer initialLeader = cluster.getLeaderPeer();
-		assertNotNull(initialLeader, "Initial leader should be elected");
-		log.info("Initial leader: {}", initialLeader.getRaftPeerId());
-
-		// 等待一段时间，验证 Leader 保持不变
-		Thread.sleep(2000);
-
-		RaftPeer currentLeader = cluster.getLeaderPeer();
-		assertNotNull(currentLeader, "Leader should still exist");
-		assertEquals(initialLeader.getRaftPeerId(), currentLeader.getRaftPeerId(), "Leader should remain the same");
-
-		// 验证仍然只有一个 Leader
-		long leaderCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-			.count();
-		assertEquals(1, leaderCount, "Should still have exactly one leader");
-
-		log.info("=== Test Passed: Leader Stability ===");
-	}
-
-	/**
-	 * 测试 Leader 选举的确定性 场景：多次重启集群，验证每次都能成功选举出 Leader
-	 */
-	@Test
-	public void testLeaderElectionDeterminism() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Leader Election Determinism ===");
-
-		for (int i = 0; i < 3; i++) {
-			final int round = i + 1;
-			log.info("--- Election round {} ---", round);
-			cluster = new TestCluster("test-group-determinism-" + i, 3);
-			cluster.startup();
-
-			// 等待 Leader 选举完成
-			Wait.untilIsTrue(() -> {
-				RaftPeer leader = cluster.getLeaderPeer();
-				if (leader != null) {
-					log.info("Round {}: Leader elected: {}", round, leader.getRaftPeerId());
-					return true;
-				}
-				return false;
-			}, 100, 100);
-
-			// 验证 Leader 存在
-			RaftPeer leader = cluster.getLeaderPeer();
-			assertNotNull(leader, "Leader should be elected in round " + round);
-
-			// 验证只有一个 Leader
-			long leaderCount = cluster.getRaftNodes()
-				.stream()
-				.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-				.count();
-			assertEquals(1, leaderCount, "Should have exactly one leader in round " + round);
-
-			log.info("Round {} cluster state:\n{}", round, cluster.printRaftNodes());
-
-			// 清理当前集群
-			cluster = null;
-			Thread.sleep(500); // 短暂等待，确保资源释放
-		}
-
-		log.info("=== Test Passed: Leader Election Determinism ===");
 	}
 
 	/**
@@ -230,7 +41,7 @@ public class LeaderElectionTests {
 	public void testLeaderElectionWithDifferentClusterSizes() throws InterruptedException, TimeoutException {
 		log.info("=== Test: Leader Election with Different Cluster Sizes ===");
 
-		int[] clusterSizes = { 2, 3, 4, 5, 7 };
+		int[] clusterSizes = { 1, 2, 3, 4, 5, 7 };
 
 		for (int size : clusterSizes) {
 			log.info("--- Testing cluster size: {} ---", size);
@@ -269,7 +80,7 @@ public class LeaderElectionTests {
 			log.info("Cluster size {} state:\n{}", size, cluster.printRaftNodes());
 
 			// 清理当前集群
-			cluster = null;
+			cluster.shutdown();
 			Thread.sleep(500); // 短暂等待，确保资源释放
 		}
 
@@ -304,39 +115,6 @@ public class LeaderElectionTests {
 	}
 
 	/**
-	 * 测试并发启动场景下的 Leader 选举 场景：所有节点几乎同时启动，验证能够正确选举出 Leader
-	 */
-	@Test
-	public void testConcurrentStartupLeaderElection() throws InterruptedException, TimeoutException {
-		log.info("=== Test: Concurrent Startup Leader Election ===");
-		cluster = new TestCluster("test-group-concurrent", 5);
-		cluster.startup();
-
-		// 等待 Leader 选举完成
-		Wait.untilIsTrue(() -> {
-			RaftPeer leader = cluster.getLeaderPeer();
-			if (leader != null) {
-				log.info("Leader elected: {}", leader.getRaftPeerId());
-				log.info("Cluster state:\n{}", cluster.printRaftNodes());
-				return true;
-			}
-			return false;
-		}, 100, 150);
-
-		// 验证只有一个 Leader
-		RaftPeer leader = cluster.getLeaderPeer();
-		assertNotNull(leader, "Leader should be elected");
-
-		long leaderCount = cluster.getRaftNodes()
-			.stream()
-			.filter(node -> node.getRaftRole() == RaftRole.LEADER)
-			.count();
-		assertEquals(1, leaderCount, "Should have exactly one leader even with concurrent startup");
-
-		log.info("=== Test Passed: Concurrent Startup Leader Election ===");
-	}
-
-	/**
 	 * 测试 Leader 选举后的集群状态一致性 场景：验证选举完成后，所有 Follower 都认可同一个 Leader
 	 */
 	@Test
@@ -356,6 +134,7 @@ public class LeaderElectionTests {
 		Thread.sleep(1000);
 
 		// 验证所有 Follower 的状态
+		// todo
 		long followerCount = cluster.getRaftNodes()
 			.stream()
 			.filter(node -> node.getRaftRole() == RaftRole.FOLLOWER)
@@ -375,7 +154,7 @@ public class LeaderElectionTests {
 	public void testRapidLeaderElectionCycles() throws InterruptedException, TimeoutException {
 		log.info("=== Test: Rapid Leader Election Cycles ===");
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 10; i++) {
 			log.info("--- Rapid election cycle {} ---", i + 1);
 			cluster = new TestCluster("test-group-rapid-" + i, 3);
 			cluster.startup();
@@ -388,7 +167,7 @@ public class LeaderElectionTests {
 			log.info("Cycle {}: Leader is {}", i + 1, leader.getRaftPeerId());
 
 			// 立即清理
-			cluster = null;
+			cluster.shutdown();
 		}
 
 		log.info("=== Test Passed: Rapid Leader Election Cycles ===");

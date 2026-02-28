@@ -17,6 +17,7 @@ import java.util.List;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
+import io.github.xinfra.lab.raft.protocol.Operation;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationRequest;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationResponse;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -447,6 +448,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 	private boolean isCurrentLeaderValid() {
 		return StringUtils.isNoneBlank(state.getLeaderId()) && System.currentTimeMillis()
 				- state.getLastLeaderRpcTimeMills() < raftNodeOptions.getElectionTimeoutMills();
+	}
+
+	@Override
+	public void applyOperation(Operation operation) {
+		// todo
 	}
 
 }

@@ -1,10 +1,10 @@
 package io.github.xinfra.lab.raft;
 
-import io.github.xinfra.lab.raft.protocol.AdminProtocol;
+import io.github.xinfra.lab.raft.protocol.RaftAdminProtocol;
 import io.github.xinfra.lab.raft.protocol.RaftClientProtocol;
 import io.github.xinfra.lab.raft.protocol.RaftServerService;
 
-public interface RaftNode extends LifeCycle, RaftServerService, RaftClientProtocol, AdminProtocol {
+public interface RaftNode extends LifeCycle, RaftServerService, RaftClientProtocol, RaftAdminProtocol {
 
 	String getRaftGroupId();
 
