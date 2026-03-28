@@ -24,8 +24,8 @@ public class Configuration implements Serializable {
 	public Configuration(List<RaftPeer> peers, List<RaftPeer> learners) {
 		checkPeerIds(peers);
 		checkPeerIds(learners);
-		this.peers = peers;
-		this.learners = learners;
+		this.peers = new ArrayList<>(peers); // copy
+		this.learners = new ArrayList<>(learners); // copy
 	}
 
 	public void checkPeerIds(List<RaftPeer> peerIds) {

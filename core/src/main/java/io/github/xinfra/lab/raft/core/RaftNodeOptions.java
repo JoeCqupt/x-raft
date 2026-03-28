@@ -1,5 +1,6 @@
-package io.github.xinfra.lab.raft;
+package io.github.xinfra.lab.raft.core;
 
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.conf.Configuration;
 import io.github.xinfra.lab.raft.log.RaftLogType;
 import io.github.xinfra.lab.raft.statemachine.StateMachine;

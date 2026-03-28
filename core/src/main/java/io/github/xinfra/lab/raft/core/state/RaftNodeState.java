@@ -1,5 +1,7 @@
 package io.github.xinfra.lab.raft.core.state;
 
+import io.github.xinfra.lab.raft.AbstractLifeCycle;
+import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.core.annotation.GuardByLock;
@@ -16,7 +18,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Slf4j
-public class RaftNodeState {
+public class RaftNodeState extends AbstractLifeCycle {
 
 	/**
 	 * guard lock for state transition
@@ -176,6 +178,48 @@ public class RaftNodeState {
 				log.info("node:{} notify log appended", xRaftNode.getRaftGroupPeerId());
 				leaderState.notifyLogChanged();
 			}
+		}
+	}
+
+	@Override
+	public void startup() {
+		super.startup();
+		try {
+			writeLock.lock();
+			RaftPeer raftPeer = configState.getCurrentConfig().getRaftPeer(xRaftNode.getRaftPeerId());
+			if (raftPeer != null) {
+				changeToFollower();
+			}
+			else {
+				// not in config : start up as learner
+				changeToLearner();
+			}
+		}
+		finally {
+			writeLock.unlock();
+		}
+	}
+
+	@Override
+	public void shutdown() {
+		super.shutdown();
+		try {
+			writeLock.lock();
+			if (role == RaftRole.LEADER) {
+				leaderState.shutdown();
+			}
+			else if (role == RaftRole.CANDIDATE) {
+				candidateState.shutdown();
+			}
+			else if (role == RaftRole.FOLLOWER) {
+				followerState.shutdown();
+			}
+			else if (role == RaftRole.LEARNER) {
+				learnerState.shutdown();
+			}
+		}
+		finally {
+			writeLock.unlock();
 		}
 	}
 

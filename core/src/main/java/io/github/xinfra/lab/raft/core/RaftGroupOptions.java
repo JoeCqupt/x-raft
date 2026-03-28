@@ -1,4 +1,4 @@
-package io.github.xinfra.lab.raft;
+package io.github.xinfra.lab.raft.core;
 
 import lombok.Data;
 

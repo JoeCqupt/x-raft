@@ -1,7 +1,8 @@
 package io.github.xinfra.lab.raft.transport;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.RaftNode;
+import io.github.xinfra.lab.raft.base.TestCluster;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.exception.RaftException;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
@@ -11,7 +12,9 @@ import io.github.xinfra.lab.raft.protocol.VoteResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 
+import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.github.xinfra.lab.raft.common.RaftErrorCode.NODE_NOT_FOUND;
+import static io.github.xinfra.lab.raft.common.RaftErrorCode.UNKNOWN_ERROR;
 import static io.github.xinfra.lab.raft.core.transport.RaftApi.appendEntries;
 import static io.github.xinfra.lab.raft.core.transport.RaftApi.requestVote;
 
@@ -33,7 +37,7 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 	private TransportClientOptions transportClientOptions;
 
-	private List<RaftNode> raftNodes;
+	private TestCluster testCluster;
 
 	private AtomicLong requestIdGenerator = new AtomicLong();
 
@@ -43,8 +47,8 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 
 	ExecutorService callExecutor = Executors.newCachedThreadPool();
 
-	public void setRaftNodes(List<RaftNode> raftNodes) {
-		this.raftNodes = raftNodes;
+	public void setRaftCluster(TestCluster cluster) {
+		this.testCluster = cluster;
 	}
 
 	public LocalTransportClient(TransportClientOptions transportClientOptions) {
@@ -95,13 +99,18 @@ public class LocalTransportClient extends AbstractLifeCycle implements Transport
 			RaftGroupAware raftGroupAware = (RaftGroupAware) request;
 			String requestRaftGroupId = raftGroupAware.getRaftGroupId();
 			String requestPeerId = raftGroupAware.getRaftPeerId();
-			RaftNode raftNode = raftNodes.stream()
+			XRaftNode raftNode = testCluster.getRaftNodes()
+				.stream()
 				.filter(node -> node.getRaftGroupId().equals(requestRaftGroupId)
 						&& node.getRaftPeer().getRaftPeerId().equals(requestPeerId))
 				.findFirst()
-				.get();
+				.orElse(null);
 			if (raftNode == null) {
 				throw new RaftException(NODE_NOT_FOUND);
+			}
+			if (!raftNode.isStarted()) {
+				// 节点已经下线了
+				throw new RaftException(UNKNOWN_ERROR.getCode(), new IOException("node already shutdown"));
 			}
 
 			Object response = null;

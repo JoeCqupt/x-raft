@@ -61,7 +61,7 @@ public class LeaderState {
 		}
 
 		// append configurationEntry when leader startup
-		xRaftNode.getState().getRaftLog().append(configurationEntry);
+		xRaftNode.appendLog(configurationEntry);
 	}
 
 	public void shutdown() {

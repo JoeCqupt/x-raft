@@ -1,6 +1,8 @@
 package io.github.xinfra.lab.raft.statemachine;
 
-public interface StateMachine {
+import io.github.xinfra.lab.raft.LifeCycle;
+
+public interface StateMachine extends LifeCycle {
 
 	void onLeaderChange(String leaderId);
 

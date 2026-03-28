@@ -1,14 +1,13 @@
 package io.github.xinfra.lab.raft.base;
 
+import io.github.xinfra.lab.raft.core.XRaftGroup;
+import io.github.xinfra.lab.raft.core.XRaftNode;
 import io.github.xinfra.lab.raft.statemachine.NOOPStateMachine;
-import io.github.xinfra.lab.raft.RaftGroup;
-import io.github.xinfra.lab.raft.RaftGroupOptions;
-import io.github.xinfra.lab.raft.RaftNode;
-import io.github.xinfra.lab.raft.RaftNodeOptions;
+import io.github.xinfra.lab.raft.core.RaftGroupOptions;
+import io.github.xinfra.lab.raft.core.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
-import io.github.xinfra.lab.raft.RaftServer;
-import io.github.xinfra.lab.raft.RaftServerOptions;
+import io.github.xinfra.lab.raft.core.RaftServerOptions;
 import io.github.xinfra.lab.raft.conf.Configuration;
 import io.github.xinfra.lab.raft.core.XRaftServer;
 import io.github.xinfra.lab.raft.core.log.MemoryRaftLogType;
@@ -22,7 +21,9 @@ import lombok.Getter;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 1 raft group + N raft server + N raft nodes
@@ -44,9 +45,11 @@ public class TestCluster {
 
 	List<RaftPeer> raftPeers = new ArrayList<>();
 
-	List<RaftServer> raftServers = new ArrayList<>();
+	List<XRaftServer> raftServers = new ArrayList<>();
 
-	List<RaftNode> raftNodes = new ArrayList<>();
+	List<XRaftNode> raftNodes = new ArrayList<>();
+
+	Map<XRaftNode, XRaftServer> raftNodeRaftServerMap = new HashMap<>();
 
 	public TestCluster(String raftGroupId, int peerNums) {
 		this.raftGroupId = raftGroupId;
@@ -73,7 +76,7 @@ public class TestCluster {
 			transportServerOptions.setIp(raftPeer.getAddress().getHostName());
 			transportServerOptions.setPort(raftPeer.getAddress().getPort());
 			raftServerOptions.setTransportServerOptions(transportServerOptions);
-			RaftServer raftServer = new XRaftServer(raftServerOptions);
+			XRaftServer raftServer = new XRaftServer(raftServerOptions);
 			raftServer.startup();
 
 			raftServers.add(raftServer);
@@ -84,7 +87,7 @@ public class TestCluster {
 
 		// every raft server start raft group
 		for (int i = 0; i < peerNums; i++) {
-			RaftServer raftServer = raftServers.get(i);
+			XRaftServer raftServer = raftServers.get(i);
 			RaftPeer raftPeer = raftPeers.get(i);
 
 			RaftNodeOptions raftNodeOptions = new RaftNodeOptions();
@@ -93,24 +96,22 @@ public class TestCluster {
 			raftNodeOptions.setShareTransportClient(transportClient);
 			raftNodeOptions.setInitialConf(new Configuration(raftPeers, new ArrayList<>()));
 			raftNodeOptions.setRaftLogType(MemoryRaftLogType.memory);
-			raftNodeOptions.setStateMachine(NOOPStateMachine.INSTANCE);
+			raftNodeOptions.setStateMachine(new NOOPStateMachine());
 
 			RaftGroupOptions raftGroupOptions = new RaftGroupOptions();
 			raftGroupOptions.setRaftNodeOptions(raftNodeOptions);
 			raftGroupOptions.setRaftGroupId(raftGroupId);
 
-			RaftGroup raftGroup = raftServer.startRaftGroup(raftGroupOptions);
+			XRaftGroup raftGroup = raftServer.startRaftGroup(raftGroupOptions);
 
 			raftNodes.add(raftGroup.getRaftNode());
+			raftNodeRaftServerMap.put(raftGroup.getRaftNode(), raftServer);
 		}
 
 	}
 
 	public void shutdown() {
-		for (RaftNode raftNode : raftNodes) {
-			raftNode.shutdown();
-		}
-		for (RaftServer raftServer : raftServers) {
+		for (XRaftServer raftServer : raftServers) {
 			raftServer.shutdown();
 		}
 	}
@@ -119,16 +120,16 @@ public class TestCluster {
 		TransportClient transportClient = transportType.newClient(new TransportClientOptions());
 		if (transportType == LocalTransportType.local) {
 			LocalTransportClient localTransportClient = (LocalTransportClient) transportClient;
-			localTransportClient.setRaftNodes(raftNodes);
+			localTransportClient.setRaftCluster(this);
 		}
 
 		return transportClient;
 	}
 
-	public RaftPeer getLeaderPeer() {
-		for (RaftNode raftNode : raftNodes) {
+	public XRaftNode getLeaderNode() {
+		for (XRaftNode raftNode : raftNodes) {
 			if (raftNode.getRaftRole() == RaftRole.LEADER) {
-				return raftNode.getRaftPeer();
+				return raftNode;
 			}
 		}
 		return null;
@@ -136,7 +137,7 @@ public class TestCluster {
 
 	public String printRaftNodes() {
 		StringBuilder sb = new StringBuilder();
-		for (RaftNode raftNode : raftNodes) {
+		for (XRaftNode raftNode : raftNodes) {
 			sb.append(raftNode.getRaftGroupPeerId())
 				.append(":")
 				.append(raftNode.getRaftRole())

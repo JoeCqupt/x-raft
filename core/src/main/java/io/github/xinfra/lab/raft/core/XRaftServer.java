@@ -1,10 +1,6 @@
 package io.github.xinfra.lab.raft.core;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.RaftGroup;
-import io.github.xinfra.lab.raft.RaftGroupOptions;
-import io.github.xinfra.lab.raft.RaftServer;
-import io.github.xinfra.lab.raft.RaftServerOptions;
 import io.github.xinfra.lab.raft.core.transport.RaftApi;
 import io.github.xinfra.lab.raft.transport.TransportServer;
 import io.github.xinfra.lab.raft.transport.TransportType;
@@ -14,13 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class XRaftServer extends AbstractLifeCycle implements RaftServer {
+public class XRaftServer extends AbstractLifeCycle {
 
 	private RaftServerOptions raftServerOptions;
 
 	private TransportServer transportServer;
 
-	private Map<String, RaftGroup> raftGroupMap = new HashMap<>();
+	private Map<String, XRaftGroup> raftGroupMap = new HashMap<>();
 
 	public XRaftServer(RaftServerOptions raftServerOptions) {
 		this.raftServerOptions = raftServerOptions;
@@ -41,23 +37,21 @@ public class XRaftServer extends AbstractLifeCycle implements RaftServer {
 	@Override
 	public void shutdown() {
 		super.shutdown();
+		raftGroupMap.values().forEach(XRaftGroup::shutdown);
 		transportServer.shutdown();
-		raftGroupMap.values().forEach(RaftGroup::shutdown);
 	}
 
-	@Override
-	public RaftGroup startRaftGroup(RaftGroupOptions raftGroupOptions) {
+	public XRaftGroup startRaftGroup(RaftGroupOptions raftGroupOptions) {
 		if (raftGroupMap.containsKey(raftGroupOptions.getRaftGroupId())) {
 			throw new IllegalArgumentException("raft group already exists");
 		}
-		RaftGroup raftGroup = new XRaftGroup(raftGroupOptions);
+		XRaftGroup raftGroup = new XRaftGroup(raftGroupOptions);
 		raftGroup.startup();
 		raftGroupMap.put(raftGroupOptions.getRaftGroupId(), raftGroup);
 		return raftGroup;
 	}
 
-	@Override
-	public List<RaftGroup> getRaftGroups() {
+	public List<XRaftGroup> getRaftGroups() {
 		return raftGroupMap.values().stream().collect(Collectors.toList());
 	}
 

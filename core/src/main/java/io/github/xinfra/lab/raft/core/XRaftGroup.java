@@ -1,30 +1,25 @@
 package io.github.xinfra.lab.raft.core;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.RaftGroup;
-import io.github.xinfra.lab.raft.RaftGroupOptions;
-import io.github.xinfra.lab.raft.RaftNode;
 
-public class XRaftGroup extends AbstractLifeCycle implements RaftGroup {
+public class XRaftGroup extends AbstractLifeCycle {
 
-	private RaftGroupOptions raftGroupOptions;
+	private final RaftGroupOptions raftGroupOptions;
 
-	private String raftGroupId;
+	private final String raftGroupId;
 
-	private RaftNode raftNode;
+	private XRaftNode raftNode;
 
 	public XRaftGroup(RaftGroupOptions raftGroupOptions) {
 		this.raftGroupOptions = raftGroupOptions;
 		this.raftGroupId = raftGroupOptions.getRaftGroupId();
 	}
 
-	@Override
 	public String getRaftGroupId() {
 		return raftGroupId;
 	}
 
-	@Override
-	public RaftNode getRaftNode() {
+	public XRaftNode getRaftNode() {
 		return raftNode;
 	}
 

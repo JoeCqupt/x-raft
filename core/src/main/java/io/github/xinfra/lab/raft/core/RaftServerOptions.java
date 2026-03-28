@@ -1,4 +1,4 @@
-package io.github.xinfra.lab.raft;
+package io.github.xinfra.lab.raft.core;
 
 import io.github.xinfra.lab.raft.transport.TransportServerOptions;
 import io.github.xinfra.lab.raft.transport.TransportType;

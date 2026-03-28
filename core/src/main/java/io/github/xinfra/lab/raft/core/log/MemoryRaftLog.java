@@ -1,6 +1,5 @@
 package io.github.xinfra.lab.raft.core.log;
 
-import io.github.xinfra.lab.raft.RaftNode;
 import io.github.xinfra.lab.raft.log.LogEntry;
 import io.github.xinfra.lab.raft.log.RaftLog;
 import io.github.xinfra.lab.raft.log.RaftMetadata;
@@ -14,18 +13,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MemoryRaftLog implements RaftLog {
 
-	private RaftNode raftNode;
-
 	List<LogEntry> logEntries = new ArrayList<>();
 
 	// todo: why use fair use true?
 	private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
 
 	private AtomicReference<RaftMetadata> raftMetadataReference = new AtomicReference<>(RaftMetadata.getDefault());
-
-	public MemoryRaftLog(RaftNode raftNode) {
-		this.raftNode = raftNode;
-	}
 
 	@Override
 	public void persistMetadata(RaftMetadata raftMetadata) {
@@ -59,8 +52,6 @@ public class MemoryRaftLog implements RaftLog {
 		readWriteLock.writeLock().lock();
 		try {
 			logEntries.add(logEntry);
-			// notify
-			raftNode.notifyLogAppended();
 		}
 		finally {
 			readWriteLock.writeLock().unlock();

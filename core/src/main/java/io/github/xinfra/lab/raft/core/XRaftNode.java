@@ -1,8 +1,6 @@
 package io.github.xinfra.lab.raft.core;
 
 import io.github.xinfra.lab.raft.AbstractLifeCycle;
-import io.github.xinfra.lab.raft.RaftNode;
-import io.github.xinfra.lab.raft.RaftNodeOptions;
 import io.github.xinfra.lab.raft.RaftPeer;
 import io.github.xinfra.lab.raft.RaftRole;
 import io.github.xinfra.lab.raft.conf.Configuration;
@@ -18,6 +16,9 @@ import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
 import io.github.xinfra.lab.raft.protocol.Operation;
+import io.github.xinfra.lab.raft.protocol.RaftAdminProtocol;
+import io.github.xinfra.lab.raft.protocol.RaftClientProtocol;
+import io.github.xinfra.lab.raft.protocol.RaftServerService;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationRequest;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationResponse;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -29,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
-public class XRaftNode extends AbstractLifeCycle implements RaftNode {
+public class XRaftNode extends AbstractLifeCycle implements RaftServerService, RaftClientProtocol, RaftAdminProtocol {
 
 	private String raftGroupId;
 
@@ -59,7 +60,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 			this.transportClient = raftNodeOptions.getTransportType()
 				.newClient(raftNodeOptions.getTransportClientOptions());
 		}
-		RaftLog raftLog = raftNodeOptions.getRaftLogType().newRaftLog(this);
+		RaftLog raftLog = raftNodeOptions.getRaftLogType().newRaftLog();
 
 		Configuration initialConf = raftNodeOptions.getInitialConf();
 		ConfigurationEntry initialConfiguration = new ConfigurationEntry(null, initialConf);
@@ -190,7 +191,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 
 					if (conflictFound) {
 						// 已经发现冲突并截断，直接追加后续所有日志
-						raftLog.append(entry);
+						appendLog(entry);
 						log.debug("appended entry at index:{}, term:{} after conflict resolution", entry.index(),
 								entry.term());
 					}
@@ -217,7 +218,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 								}
 
 								// 追加新日志
-								raftLog.append(entry);
+								appendLog(entry);
 								log.debug("appended entry at index:{}, term:{} after truncation", entry.index(),
 										entry.term());
 							}
@@ -238,7 +239,7 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 							}
 
 							// 直接追加
-							raftLog.append(entry);
+							appendLog(entry);
 							log.debug("appended entry at index:{}, term:{}", entry.index(), entry.term());
 						}
 					}
@@ -263,17 +264,14 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		}
 	}
 
-	@Override
 	public String getRaftGroupId() {
 		return raftGroupId;
 	}
 
-	@Override
 	public String getRaftPeerId() {
 		return raftPeer.getRaftPeerId();
 	}
 
-	@Override
 	public String getRaftGroupPeerId() {
 		return String.format("[%s]-[%s]", raftGroupId, getRaftPeerId());
 	}
@@ -282,14 +280,8 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		return raftPeer;
 	}
 
-	@Override
 	public RaftRole getRaftRole() {
 		return state.getRole();
-	}
-
-	@Override
-	public void notifyLogAppended() {
-		state.notifyLogAppended();
 	}
 
 	@Override
@@ -298,30 +290,21 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		// todo: init raft storage - check lock
 		// todo: init raft log - check lock
 		// todo: init state machine - check lock
+		stateMachine.startup();
+		// todo:lock
 		state.updateConfiguration();
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.startup();
 		}
 		// todo: connect to peers
-		try {
-			state.getWriteLock().lock();
-			RaftPeer raftPeer = state.getConfigState().getCurrentConfig().getRaftPeer(getRaftPeerId());
-			if (raftPeer != null) {
-				state.changeToFollower();
-			}
-			else {
-				// not in config : start up as learner
-				state.changeToLearner();
-			}
-		}
-		finally {
-			state.getWriteLock().unlock();
-		}
+		state.startup();
 	}
 
 	@Override
 	public void shutdown() {
 		super.shutdown();
+		state.shutdown();
+		stateMachine.shutdown();
 		if (!raftNodeOptions.isShareTransportClientFlag()) {
 			transportClient.shutdown();
 		}
@@ -437,6 +420,11 @@ public class XRaftNode extends AbstractLifeCycle implements RaftNode {
 		finally {
 			state.getWriteLock().unlock();
 		}
+	}
+
+	public void appendLog(LogEntry entry) {
+		state.getRaftLog().append(entry);
+		state.notifyLogAppended();
 	}
 
 	@Override

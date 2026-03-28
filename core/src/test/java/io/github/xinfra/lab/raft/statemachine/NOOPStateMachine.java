@@ -1,8 +1,8 @@
 package io.github.xinfra.lab.raft.statemachine;
 
-public class NOOPStateMachine implements StateMachine {
+import io.github.xinfra.lab.raft.AbstractLifeCycle;
 
-	public static final NOOPStateMachine INSTANCE = new NOOPStateMachine();
+public class NOOPStateMachine extends AbstractLifeCycle implements StateMachine {
 
 	@Override
 	public void onLeaderChange(String leaderId) {
