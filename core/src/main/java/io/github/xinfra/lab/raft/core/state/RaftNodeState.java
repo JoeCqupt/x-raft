@@ -91,6 +91,10 @@ public class RaftNodeState extends AbstractLifeCycle {
 		this.learnerState = new LearnerState(xRaftNode);
 	}
 
+    public boolean isLeader() {
+        return role == RaftRole.LEADER;
+    }
+
 	public void changeToFollower() {
 		if (role == RaftRole.FOLLOWER) {
 			return;
@@ -222,5 +226,6 @@ public class RaftNodeState extends AbstractLifeCycle {
 			writeLock.unlock();
 		}
 	}
+
 
 }

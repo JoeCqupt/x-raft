@@ -15,10 +15,13 @@ import java.util.List;
 import io.github.xinfra.lab.raft.log.TermIndex;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesRequest;
 import io.github.xinfra.lab.raft.protocol.AppendEntriesResponse;
-import io.github.xinfra.lab.raft.protocol.Operation;
-import io.github.xinfra.lab.raft.protocol.RaftAdminProtocol;
-import io.github.xinfra.lab.raft.protocol.RaftClientProtocol;
+import io.github.xinfra.lab.raft.protocol.OperationRequest;
+import io.github.xinfra.lab.raft.protocol.OperationResponse;
+import io.github.xinfra.lab.raft.protocol.RaftAdminService;
+import io.github.xinfra.lab.raft.protocol.RaftClientService;
 import io.github.xinfra.lab.raft.protocol.RaftServerService;
+import io.github.xinfra.lab.raft.protocol.ReadRequest;
+import io.github.xinfra.lab.raft.protocol.ReadResponse;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationRequest;
 import io.github.xinfra.lab.raft.protocol.SetConfigurationResponse;
 import io.github.xinfra.lab.raft.protocol.VoteRequest;
@@ -30,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
-public class XRaftNode extends AbstractLifeCycle implements RaftServerService, RaftClientProtocol, RaftAdminProtocol {
+public class XRaftNode extends AbstractLifeCycle implements RaftServerService, RaftClientService, RaftAdminService {
 
 	private String raftGroupId;
 
@@ -439,8 +442,18 @@ public class XRaftNode extends AbstractLifeCycle implements RaftServerService, R
 	}
 
 	@Override
-	public void applyOperation(Operation operation) {
-		// todo
+	public OperationResponse applyOperation(OperationRequest operationRequest) {
+        // todo
+       if (!state.isLeader()){
+           return Responses.operationResponse(false, "not leader");
+       }
+        return  null;
 	}
+
+    @Override
+    public ReadResponse read(ReadRequest readRequest) {
+        // todo
+        return null;
+    }
 
 }

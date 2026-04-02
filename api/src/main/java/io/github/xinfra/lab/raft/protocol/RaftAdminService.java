@@ -1,6 +1,6 @@
 package io.github.xinfra.lab.raft.protocol;
 
-public interface RaftAdminProtocol {
+public interface RaftAdminService {
 
 	/**
 	 * change raft configuration

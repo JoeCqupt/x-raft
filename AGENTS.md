@@ -32,3 +32,10 @@ x-raft/
 ├── transport/              # 具体传输模块实现 (XRemotingTransport)
 └── storage/                # 具体存储模块实现
 ```
+
+**代码规范**
+- 使用 Spring Java Format 进行代码格式化
+- 使用 Lombok 简化代码
+- 使用 SLF4J 进行日志记录
+- 避免使用hardcode和魔术数字
+- 使用合适的设计模式
